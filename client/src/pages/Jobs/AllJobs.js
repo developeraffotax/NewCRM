@@ -56,137 +56,137 @@ export default function AllJobs() {
     // eslint-disable-next-line
   }, []);
 
-  const columns = [
-    {
-      headerName: "Sr",
-      filter: false,
-      checkboxSelection: true,
-      headerCheckboxSelection: true,
-      editable: false,
-      valueGetter: (params) => params.node.rowIndex + 1,
-    },
-    {
-      headerName: "Company Name",
-      field: "companyName",
-      editable: false,
-      filter: true,
-    },
-    {
-      headerName: "Client Name",
-      field: "clientName",
-      filter: true,
-    },
-    {
-      headerName: "Job Holder",
-      field: "job.jobHolder",
-      filter: "agSetColumnFilter",
-      filterParams: {
-        values: jobHolders,
-        suppressMiniFilter: true,
-        suppressSelectAll: true,
-      },
-      floatingFilterComponent: "agSetColumnFloatingFilter",
-      floatingFilterComponentParams: {
-        values: jobHolders,
-        suppressFilterButton: true,
-        suppressInput: true,
-      },
-    },
-    {
-      headerName: "Departments",
-      field: "job.jobName",
-      filter: true,
-    },
-    {
-      headerName: "Hours",
-      field: "totalHours",
-      filter: true,
-    },
-    {
-      headerName: "Year End",
-      field: "job.yearEnd",
-      filter: true,
-    },
-    {
-      headerName: "Deadline",
-      field: "job.jobDeadline",
-      filter: true,
-    },
-    {
-      headerName: "Job Date",
-      field: "currentDate",
-      filter: true,
-    },
-    {
-      headerName: "Status",
-      field: "job.jobStatus",
-      filter: true,
-    },
-    {
-      headerName: "Note",
-      field: "job.note",
-      filter: true,
-    },
-    {
-      headerName: "Job Status",
-      field: "job.jobStatus",
-      cellEditor: "agSelectCellEditor",
-      cellEditorParams: {
-        values: [
-          "Select",
-          "Data",
-          "Progress",
-          "Queries",
-          "Approval",
-          "Submission",
-          "Billing",
-          "Feedback",
-        ],
-      },
-      floatingFilterComponent: "selectFloatingFilter",
-      floatingFilterComponentParams: {
-        options: [
-          "Data",
-          "Progress",
-          "Queries",
-          "Approval",
-          "Submission",
-          "Billing",
-          "Feedback",
-        ],
-        suppressFilterButton: true,
-        suppressInput: true,
-      },
-    },
-    {
-      headerName: "Lead",
-      field: "job.lead",
-      filter: true,
-    },
-    {
-      headerName: "Timer",
-      field: "job.timer",
-      filter: true,
-    },
-    {
-      headerName: "Chat",
-      field: "job.chat",
-      filter: true,
-    },
-  ];
+  // const columns = [
+  //   {
+  //     headerName: "Sr",
+  //     filter: false,
+  //     checkboxSelection: true,
+  //     headerCheckboxSelection: true,
+  //     editable: false,
+  //     valueGetter: (params) => params.node.rowIndex + 1,
+  //   },
+  //   {
+  //     headerName: "Company Name",
+  //     field: "companyName",
+  //     editable: false,
+  //     filter: true,
+  //   },
+  //   {
+  //     headerName: "Client Name",
+  //     field: "clientName",
+  //     filter: true,
+  //   },
+  //   {
+  //     headerName: "Job Holder",
+  //     field: "job.jobHolder",
+  //     filter: "agSetColumnFilter",
+  //     filterParams: {
+  //       values: jobHolders,
+  //       suppressMiniFilter: true,
+  //       suppressSelectAll: true,
+  //     },
+  //     floatingFilterComponent: "agSetColumnFloatingFilter",
+  //     floatingFilterComponentParams: {
+  //       values: jobHolders,
+  //       suppressFilterButton: true,
+  //       suppressInput: true,
+  //     },
+  //   },
+  //   {
+  //     headerName: "Departments",
+  //     field: "job.jobName",
+  //     filter: true,
+  //   },
+  //   {
+  //     headerName: "Hours",
+  //     field: "totalHours",
+  //     filter: true,
+  //   },
+  //   {
+  //     headerName: "Year End",
+  //     field: "job.yearEnd",
+  //     filter: true,
+  //   },
+  //   {
+  //     headerName: "Deadline",
+  //     field: "job.jobDeadline",
+  //     filter: true,
+  //   },
+  //   {
+  //     headerName: "Job Date",
+  //     field: "currentDate",
+  //     filter: true,
+  //   },
+  //   {
+  //     headerName: "Status",
+  //     field: "job.jobStatus",
+  //     filter: true,
+  //   },
+  //   {
+  //     headerName: "Note",
+  //     field: "job.note",
+  //     filter: true,
+  //   },
+  //   {
+  //     headerName: "Job Status",
+  //     field: "job.jobStatus",
+  //     cellEditor: "agSelectCellEditor",
+  //     cellEditorParams: {
+  //       values: [
+  //         "Select",
+  //         "Data",
+  //         "Progress",
+  //         "Queries",
+  //         "Approval",
+  //         "Submission",
+  //         "Billing",
+  //         "Feedback",
+  //       ],
+  //     },
+  //     floatingFilterComponent: "selectFloatingFilter",
+  //     floatingFilterComponentParams: {
+  //       options: [
+  //         "Data",
+  //         "Progress",
+  //         "Queries",
+  //         "Approval",
+  //         "Submission",
+  //         "Billing",
+  //         "Feedback",
+  //       ],
+  //       suppressFilterButton: true,
+  //       suppressInput: true,
+  //     },
+  //   },
+  //   {
+  //     headerName: "Lead",
+  //     field: "job.lead",
+  //     filter: true,
+  //   },
+  //   {
+  //     headerName: "Timer",
+  //     field: "job.timer",
+  //     filter: true,
+  //   },
+  //   {
+  //     headerName: "Chat",
+  //     field: "job.chat",
+  //     filter: true,
+  //   },
+  // ];
 
-  const defaultColDef = useMemo(
-    () => ({
-      sortable: true,
-      filter: true,
-      floatingFilter: true,
-      editable: true,
-      resizable: true,
-    }),
-    []
-  );
+  // const defaultColDef = useMemo(
+  //   () => ({
+  //     sortable: true,
+  //     filter: true,
+  //     floatingFilter: true,
+  //     editable: true,
+  //     resizable: true,
+  //   }),
+  //   []
+  // );
 
-  const cellClickedListener = useCallback((event) => {}, []);
+  // const cellClickedListener = useCallback((event) => {}, []);
 
   return (
     <Layout>
@@ -234,7 +234,7 @@ export default function AllJobs() {
             className="ag-theme-alpine"
             style={{ height: 600, width: "100%" }}
           >
-            <AgGridReact
+            {/* <AgGridReact
               rowData={clientJobs}
               columnDefs={columns}
               editType={"fullRow"}
@@ -245,7 +245,7 @@ export default function AllJobs() {
               paginationPageSize={25}
               onCellClicked={cellClickedListener}
               suppressDragLeaveHidesColumns={true}
-            />
+            /> */}
           </div>
         </div>
       </div>
