@@ -59,50 +59,13 @@ export const createJob = async (req, res) => {
           authCode,
           utr,
           isActive,
-          job: [job],
+          job: job,
         });
 
         // Save the client with the current job
         return await client.save();
       })
     );
-
-    // Find if the client already exists by companyName
-    // const existingClient = await jobsModel.findOne({ companyName });
-
-    // if (existingClient) {
-    //   // If the client exists, update the existing client's jobs
-    //   existingClient.jobs.push(...jobs);
-
-    //   await existingClient.save(); // Save the updated client
-
-    //   return res.status(200).send({
-    //     success: true,
-    //     message: "Jobs added successfully to the existing client",
-    //     jobs: existingClient.jobs,
-    //   });
-    // } else {
-    //   // Create a new client if it doesn't exist
-    //   const newClient = await jobsModel.create({
-    //     clientName,
-    //     regNumber,
-    //     companyName,
-    //     email,
-    //     totalHours,
-    //     currentDate,
-    //     source,
-    //     clientType,
-    //     country,
-    //     fee,
-    //     ctLogin,
-    //     pyeLogin,
-    //     trLogin,
-    //     vatLogin,
-    //     authCode,
-    //     utr,
-    //     isActive,
-    //     jobs,
-    //   });
 
     return res.status(200).send({
       success: true,
@@ -123,7 +86,7 @@ export const createJob = async (req, res) => {
 
 export const getAllClients = async (req, res) => {
   try {
-    const clients = await jobsModel.find({});
+    const clients = await jobsModel.find({}).sort({ createdAt: -1 });
 
     res.status(200).send({
       success: true,
@@ -140,58 +103,292 @@ export const getAllClients = async (req, res) => {
   }
 };
 
-// const createdJobs = await Promise.all(
-//   jobs.map(async (job) => {
-//     const client = new jobsModel({
-//       clientName,
-//       regNumber,
-//       companyName,
-//       email,
-//       totalHours,
-//       currentDate,
-//       source,
-//       clientType,
-//       country,
-//       fee,
-//       ctLogin,
-//       pyeLogin,
-//       trLogin,
-//       vatLogin,
-//       authCode,
-//       utr,
-//       isActive,
-//       job: [job],
-//     });
+// Update Client Jobs
 
-//     // Save the client with the current job
-//     return await client.save();
-//   })
-// );
+export const updateClientJob = async () => {
+  try {
+    const id = req.params.id;
+    const {
+      clientName,
+      regNumber,
+      companyName,
+      email,
+      totalHours,
+      currentDate,
+      source,
+      clientType,
+      country,
+      fee,
+      ctLogin,
+      pyeLogin,
+      trLogin,
+      vatLogin,
+      authCode,
+      utr,
+      isActive,
+      job,
+    } = req.body;
 
-// const createdJobs = [];
-// for (let i = 0; i < jobs.length; i++) {
-//   const job = jobs[i];
+    if (!clientName) {
+      return res.status(400).send({
+        success: false,
+        message: "Client name is required!",
+      });
+    }
+    if (!companyName) {
+      return res.status(400).send({
+        success: false,
+        message: "Company name is required!",
+      });
+    }
 
-//   const newJob = await jobsModel.create({
-//     clientName,
-//     regNumber,
-//     companyName,
-//     email,
-//     totalHours,
-//     currentDate,
-//     source,
-//     clientType,
-//     country,
-//     fee,
-//     ctLogin,
-//     pyeLogin,
-//     trLogin,
-//     vatLogin,
-//     authCode,
-//     utr,
-//     isActive,
-//     job,
-//   });
+    if (!job) {
+      return res.status(400).send({
+        success: false,
+        message: "Job is required!",
+      });
+    }
 
-//   createdJobs.push(newJob);
-// }
+    const clientJob = await jobsModel.findById({ _id: id });
+    if (!clientJob) {
+      return res.status(400).send({
+        success: false,
+        message: "Client Job not found!",
+      });
+    }
+
+    const updateClientJob = await jobsModel.findByIdAndUpdate(
+      { _id: clientJob._id },
+      {
+        clientName,
+        regNumber,
+        companyName,
+        email,
+        totalHours,
+        currentDate,
+        source,
+        clientType,
+        country,
+        fee,
+        ctLogin,
+        pyeLogin,
+        trLogin,
+        vatLogin,
+        authCode,
+        utr,
+        isActive,
+        job,
+      },
+      { new: true }
+    );
+
+    res.status(200).send({
+      success: true,
+      message: "Client job update successfully!",
+      ClientJob: updateClientJob,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      success: false,
+      message: "Error in update client job!",
+      error: error,
+    });
+  }
+};
+
+// Update Client Status
+
+export const updateStatus = async (req, res) => {
+  try {
+    const jobId = req.params.id;
+    const { status } = req.body;
+    if (!status) {
+      return res.status(400).send({
+        success: false,
+        message: "Status is required!",
+      });
+    }
+
+    if (!jobId) {
+      return res.status(400).send({
+        success: false,
+        message: "Job id is required!",
+      });
+    }
+
+    const clientJob = await jobsModel.findByIdAndUpdate(
+      { _id: jobId },
+      { $set: { "job.jobStatus": status } },
+      { new: true }
+    );
+
+    res.status(200).send({
+      success: true,
+      message: "Job status updated successfully!",
+      clientJob: clientJob,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      success: false,
+      message: "Error in update job status !",
+      error: error,
+    });
+  }
+};
+
+// Update Client Lead
+export const updateLead = async (req, res) => {
+  try {
+    const jobId = req.params.id;
+    const { lead } = req.body;
+    if (!lead) {
+      return res.status(400).send({
+        success: false,
+        message: "Lead user is required!",
+      });
+    }
+
+    if (!jobId) {
+      return res.status(400).send({
+        success: false,
+        message: "Job id is required!",
+      });
+    }
+
+    const clientJob = await jobsModel.findByIdAndUpdate(
+      { _id: jobId },
+      { $set: { "job.lead": lead } },
+      { new: true }
+    );
+
+    res.status(200).send({
+      success: true,
+      message: "Lead user updated successfully!",
+      clientJob: clientJob,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      success: false,
+      message: "Error in update job lead !",
+      error: error,
+    });
+  }
+};
+
+// Update Client Lead
+export const updateJobHolder = async (req, res) => {
+  try {
+    const jobId = req.params.id;
+    const { jobHolder } = req.body;
+    if (!jobHolder) {
+      return res.status(400).send({
+        success: false,
+        message: "Job Holder is required!",
+      });
+    }
+
+    if (!jobId) {
+      return res.status(400).send({
+        success: false,
+        message: "Job id is required!",
+      });
+    }
+
+    const clientJob = await jobsModel.findByIdAndUpdate(
+      { _id: jobId },
+      { $set: { "job.jobHolder": jobHolder } },
+      { new: true }
+    );
+
+    res.status(200).send({
+      success: true,
+      message: "Job holder updated successfully!",
+      clientJob: clientJob,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      success: false,
+      message: "Error in update job holder !",
+      error: error,
+    });
+  }
+};
+
+// Delete Client Jobs
+
+export const deleteClientJob = async (req, res) => {
+  try {
+    const jobId = req.params.id;
+
+    if (!jobId) {
+      return res.status(400).send({
+        success: false,
+        message: "Job id is required!",
+      });
+    }
+
+    const isExisting = await jobsModel.findById({ _id: jobId });
+
+    if (!isExisting) {
+      return res.status(400).send({
+        success: false,
+        message: "Job not found!",
+      });
+    }
+
+    await jobsModel.findByIdAndDelete({
+      _id: isExisting._id,
+    });
+
+    res.status(200).send({
+      success: true,
+      message: " Job delete successfully!",
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      success: false,
+      message: "Error in delete job !",
+      error: error,
+    });
+  }
+};
+
+// Get Single Client Job
+export const singleClientJob = async (req, res) => {
+  try {
+    const jobId = req.params.id;
+
+    if (!jobId) {
+      return res.status(400).send({
+        success: false,
+        message: "Job id is required!",
+      });
+    }
+
+    const clientJob = await jobsModel.findById({ _id: jobId });
+
+    if (!clientJob) {
+      return res.status(400).send({
+        success: false,
+        message: "Job not found!",
+      });
+    } else {
+      res.status(200).send({
+        success: true,
+        clientJob: clientJob,
+      });
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      success: false,
+      message: "Error in get single job!",
+      error: error,
+    });
+  }
+};

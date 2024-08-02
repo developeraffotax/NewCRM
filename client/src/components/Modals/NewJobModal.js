@@ -4,7 +4,7 @@ import { style } from "../../utlis/CommonStyle";
 import { BiLoaderCircle } from "react-icons/bi";
 import axios from "axios";
 
-export default function NewJobModal({ setIsOpen }) {
+export default function NewJobModal({ setIsOpen, allClientJobData }) {
   const [loading, setLoading] = useState(false);
   const [clientName, setClientName] = useState("");
   const [regNumber, setRegNumber] = useState("");
@@ -97,28 +97,22 @@ export default function NewJobModal({ setIsOpen }) {
 
   const [jobs, setJobs] = useState([]);
   const [users, setUsers] = useState([]);
-
   console.log("Jobs:", jobs);
 
   const sources = ["AIV", "UPW", "PPH", "Website", "Referal", "Partner"];
   const clients = ["Limited", "LLP", "Individual", "Non UK"];
-  const leads = ["Rashid", "Salman", "M Ali"];
-  const JobHolders = ["Rashid", "Salman", "M Ali"];
 
   // Get All Users
 
   const getAllUsers = async () => {
     try {
-      setLoading(true);
       const { data } = await axios.get(
         `${process.env.REACT_APP_API_URL}/api/v1/user/get_all/users`
       );
       setUsers(data?.users);
       console.log("users", data?.users);
-      setLoading(false);
     } catch (error) {
       console.log(error);
-      setLoading(false);
     }
   };
 
@@ -129,19 +123,49 @@ export default function NewJobModal({ setIsOpen }) {
   }, []);
 
   // Handle Add & remove Jobs
+  // const handleCheckboxChange = (formData, isChecked) => {
+  //   if (isChecked) {
+  //     setJobs([...jobs, formData]);
+  //   } else {
+  //     setJobs(jobs.filter((job) => job.jobName !== formData.jobName));
+  //   }
+  // };
   const handleCheckboxChange = (formData, isChecked) => {
     if (isChecked) {
-      setJobs([...jobs, formData]);
+      setJobs((prevJobs) => [...prevJobs, formData]);
     } else {
-      setJobs(jobs.filter((job) => job.jobName !== formData.jobName));
+      setJobs((prevJobs) =>
+        prevJobs.filter((job) => job.jobName !== formData.jobName)
+      );
     }
+  };
+
+  // Handle Update Value in Jobs
+  const handleFormDataChange = (formData, setFormData, field, value) => {
+    setFormData((prevData) => {
+      const updatedData = { ...prevData, [field]: value };
+
+      setJobs((prevJobs) => {
+        const jobIndex = prevJobs.findIndex(
+          (job) => job.jobName === updatedData.jobName
+        );
+        if (jobIndex !== -1) {
+          const updatedJobs = [...prevJobs];
+          updatedJobs[jobIndex] = updatedData;
+          return updatedJobs;
+        }
+        return prevJobs;
+      });
+
+      return updatedData;
+    });
   };
 
   //   Add Job
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (jobs.length === 0) {
-      toast.error("At least one job is required!");
+      return toast.error("At least one job is required!");
     }
     setLoading(true);
     try {
@@ -168,6 +192,7 @@ export default function NewJobModal({ setIsOpen }) {
         }
       );
       if (data) {
+        allClientJobData();
         toast.success("Job added successfully!");
         setIsOpen(false);
       }
@@ -197,7 +222,7 @@ export default function NewJobModal({ setIsOpen }) {
   }, []);
 
   return (
-    <div className="relative w-full h-[100%] mt-[1rem] py-3 px-3 sm:px-4 bg-gray-200 overflow-y-scroll ">
+    <div className="relative w-full h-[100%] mt-[1rem] py-3 pb-6  px-3 sm:px-4 bg-gray-200 hidden1 overflow-y-scroll ">
       <div className="w-full py-1 bg-orange-500/35 flex items-center justify-center">
         <img src="/logo.png" alt="Logo" className="h-[3rem] w-[8rem]" />
       </div>
@@ -367,7 +392,7 @@ export default function NewJobModal({ setIsOpen }) {
 
           {/*---------- Jobs--------- */}
           <div className="flex flex-col gap-4">
-            {/* 1 */}
+            {/* Bookkeeping */}
             <div className="flex items-center gap-4">
               <label className="flex items-center space-x-2 w-full">
                 <input
@@ -390,10 +415,12 @@ export default function NewJobModal({ setIsOpen }) {
                   placeholder="Year End"
                   value={clientBookKeepingFormData.yearEnd}
                   onChange={(e) =>
-                    setClientBookKeepingFormData({
-                      ...clientBookKeepingFormData,
-                      yearEnd: e.target.value,
-                    })
+                    handleFormDataChange(
+                      clientBookKeepingFormData,
+                      setClientBookKeepingFormData,
+                      "yearEnd",
+                      e.target.value
+                    )
                   }
                   className={`${style.input} w-full `}
                 />
@@ -405,10 +432,12 @@ export default function NewJobModal({ setIsOpen }) {
                   placeholder="Job Deadline"
                   value={clientBookKeepingFormData.jobDeadline}
                   onChange={(e) =>
-                    setClientBookKeepingFormData({
-                      ...clientBookKeepingFormData,
-                      jobDeadline: e.target.value,
-                    })
+                    handleFormDataChange(
+                      clientBookKeepingFormData,
+                      setClientBookKeepingFormData,
+                      "jobDeadline",
+                      e.target.value
+                    )
                   }
                   className={`${style.input} w-full `}
                 />
@@ -420,10 +449,12 @@ export default function NewJobModal({ setIsOpen }) {
                   placeholder="Work Deadline"
                   value={clientBookKeepingFormData.workDeadline}
                   onChange={(e) =>
-                    setClientBookKeepingFormData({
-                      ...clientBookKeepingFormData,
-                      workDeadline: e.target.value,
-                    })
+                    handleFormDataChange(
+                      clientBookKeepingFormData,
+                      setClientBookKeepingFormData,
+                      "workDeadline",
+                      e.target.value
+                    )
                   }
                   className={`${style.input} w-full `}
                 />
@@ -435,10 +466,12 @@ export default function NewJobModal({ setIsOpen }) {
                   placeholder="Hours"
                   value={clientBookKeepingFormData.hours}
                   onChange={(e) =>
-                    setClientBookKeepingFormData({
-                      ...clientBookKeepingFormData,
-                      hours: e.target.value,
-                    })
+                    handleFormDataChange(
+                      clientBookKeepingFormData,
+                      setClientBookKeepingFormData,
+                      "hours",
+                      e.target.value
+                    )
                   }
                   className={`${style.input} w-full `}
                 />
@@ -449,10 +482,12 @@ export default function NewJobModal({ setIsOpen }) {
                   placeholder="Fee"
                   value={clientBookKeepingFormData.fee}
                   onChange={(e) =>
-                    setClientBookKeepingFormData({
-                      ...clientBookKeepingFormData,
-                      fee: e.target.value,
-                    })
+                    handleFormDataChange(
+                      clientBookKeepingFormData,
+                      setClientBookKeepingFormData,
+                      "fee",
+                      e.target.value
+                    )
                   }
                   className={`${style.input} w-full `}
                 />
@@ -460,10 +495,12 @@ export default function NewJobModal({ setIsOpen }) {
               <select
                 value={clientBookKeepingFormData.lead}
                 onChange={(e) =>
-                  setClientBookKeepingFormData({
-                    ...clientBookKeepingFormData,
-                    lead: e.target.value,
-                  })
+                  handleFormDataChange(
+                    clientBookKeepingFormData,
+                    setClientBookKeepingFormData,
+                    "lead",
+                    e.target.value
+                  )
                 }
                 className={`${style.input} w-full `}
               >
@@ -477,10 +514,12 @@ export default function NewJobModal({ setIsOpen }) {
               <select
                 value={clientBookKeepingFormData.jobHolder}
                 onChange={(e) =>
-                  setClientBookKeepingFormData({
-                    ...clientBookKeepingFormData,
-                    jobHolder: e.target.value,
-                  })
+                  handleFormDataChange(
+                    clientBookKeepingFormData,
+                    setClientBookKeepingFormData,
+                    "jobHolder",
+                    e.target.value
+                  )
                 }
                 className={`${style.input} w-full `}
               >
@@ -492,7 +531,8 @@ export default function NewJobModal({ setIsOpen }) {
                 ))}
               </select>
             </div>
-            {/* 2 */}
+
+            {/* Payroll */}
             <div className="flex items-center gap-4">
               <label className="flex items-center space-x-2 w-full">
                 <input
@@ -515,10 +555,12 @@ export default function NewJobModal({ setIsOpen }) {
                   placeholder="Year End"
                   value={clientPayRollFormData.yearEnd}
                   onChange={(e) =>
-                    setClientPayRollFormData({
-                      ...clientPayRollFormData,
-                      yearEnd: e.target.value,
-                    })
+                    handleFormDataChange(
+                      clientPayRollFormData,
+                      setClientPayRollFormData,
+                      "yearEnd",
+                      e.target.value
+                    )
                   }
                   className={`${style.input} w-full `}
                 />
@@ -530,10 +572,12 @@ export default function NewJobModal({ setIsOpen }) {
                   placeholder="Job Deadline"
                   value={clientPayRollFormData.jobDeadline}
                   onChange={(e) =>
-                    setClientPayRollFormData({
-                      ...clientPayRollFormData,
-                      jobDeadline: e.target.value,
-                    })
+                    handleFormDataChange(
+                      clientPayRollFormData,
+                      setClientPayRollFormData,
+                      "jobDeadline",
+                      e.target.value
+                    )
                   }
                   className={`${style.input} w-full `}
                 />
@@ -545,10 +589,12 @@ export default function NewJobModal({ setIsOpen }) {
                   placeholder="Work Deadline"
                   value={clientPayRollFormData.workDeadline}
                   onChange={(e) =>
-                    setClientPayRollFormData({
-                      ...clientPayRollFormData,
-                      workDeadline: e.target.value,
-                    })
+                    handleFormDataChange(
+                      clientPayRollFormData,
+                      setClientPayRollFormData,
+                      "workDeadline",
+                      e.target.value
+                    )
                   }
                   className={`${style.input} w-full `}
                 />
@@ -560,10 +606,12 @@ export default function NewJobModal({ setIsOpen }) {
                   placeholder="Hours"
                   value={clientPayRollFormData.hours}
                   onChange={(e) =>
-                    setClientPayRollFormData({
-                      ...clientPayRollFormData,
-                      hours: e.target.value,
-                    })
+                    handleFormDataChange(
+                      clientPayRollFormData,
+                      setClientPayRollFormData,
+                      "hours",
+                      e.target.value
+                    )
                   }
                   className={`${style.input} w-full `}
                 />
@@ -574,10 +622,12 @@ export default function NewJobModal({ setIsOpen }) {
                   placeholder="Fee"
                   value={clientPayRollFormData.fee}
                   onChange={(e) =>
-                    setClientPayRollFormData({
-                      ...clientPayRollFormData,
-                      fee: e.target.value,
-                    })
+                    handleFormDataChange(
+                      clientPayRollFormData,
+                      setClientPayRollFormData,
+                      "fee",
+                      e.target.value
+                    )
                   }
                   className={`${style.input} w-full `}
                 />
@@ -585,10 +635,12 @@ export default function NewJobModal({ setIsOpen }) {
               <select
                 value={clientPayRollFormData.lead}
                 onChange={(e) =>
-                  setClientPayRollFormData({
-                    ...clientPayRollFormData,
-                    lead: e.target.value,
-                  })
+                  handleFormDataChange(
+                    clientPayRollFormData,
+                    setClientPayRollFormData,
+                    "lead",
+                    e.target.value
+                  )
                 }
                 className={`${style.input} w-full `}
               >
@@ -602,10 +654,12 @@ export default function NewJobModal({ setIsOpen }) {
               <select
                 value={clientPayRollFormData.jobHolder}
                 onChange={(e) =>
-                  setClientPayRollFormData({
-                    ...clientPayRollFormData,
-                    jobHolder: e.target.value,
-                  })
+                  handleFormDataChange(
+                    clientPayRollFormData,
+                    setClientPayRollFormData,
+                    "jobHolder",
+                    e.target.value
+                  )
                 }
                 className={`${style.input} w-full `}
               >
@@ -617,7 +671,8 @@ export default function NewJobModal({ setIsOpen }) {
                 ))}
               </select>
             </div>
-            {/* 3 */}
+
+            {/* VAT Return */}
             <div className="flex items-center gap-4">
               <label className="flex items-center space-x-2 w-full">
                 <input
@@ -640,10 +695,12 @@ export default function NewJobModal({ setIsOpen }) {
                   placeholder="Year End"
                   value={clientVatReturnFormData.yearEnd}
                   onChange={(e) =>
-                    setClientVatReturnFormData({
-                      ...clientVatReturnFormData,
-                      yearEnd: e.target.value,
-                    })
+                    handleFormDataChange(
+                      clientVatReturnFormData,
+                      setClientVatReturnFormData,
+                      "yearEnd",
+                      e.target.value
+                    )
                   }
                   className={`${style.input} w-full `}
                 />
@@ -655,10 +712,12 @@ export default function NewJobModal({ setIsOpen }) {
                   placeholder="Job Deadline"
                   value={clientVatReturnFormData.jobDeadline}
                   onChange={(e) =>
-                    setClientVatReturnFormData({
-                      ...clientVatReturnFormData,
-                      jobDeadline: e.target.value,
-                    })
+                    handleFormDataChange(
+                      clientVatReturnFormData,
+                      setClientVatReturnFormData,
+                      "jobDeadline",
+                      e.target.value
+                    )
                   }
                   className={`${style.input} w-full `}
                 />
@@ -670,10 +729,12 @@ export default function NewJobModal({ setIsOpen }) {
                   placeholder="Work Deadline"
                   value={clientVatReturnFormData.workDeadline}
                   onChange={(e) =>
-                    setClientVatReturnFormData({
-                      ...clientVatReturnFormData,
-                      workDeadline: e.target.value,
-                    })
+                    handleFormDataChange(
+                      clientVatReturnFormData,
+                      setClientVatReturnFormData,
+                      "workDeadline",
+                      e.target.value
+                    )
                   }
                   className={`${style.input} w-full `}
                 />
@@ -685,10 +746,12 @@ export default function NewJobModal({ setIsOpen }) {
                   placeholder="Hours"
                   value={clientVatReturnFormData.hours}
                   onChange={(e) =>
-                    setClientVatReturnFormData({
-                      ...clientVatReturnFormData,
-                      hours: e.target.value,
-                    })
+                    handleFormDataChange(
+                      clientVatReturnFormData,
+                      setClientVatReturnFormData,
+                      "hours",
+                      e.target.value
+                    )
                   }
                   className={`${style.input} w-full `}
                 />
@@ -699,10 +762,12 @@ export default function NewJobModal({ setIsOpen }) {
                   placeholder="Fee"
                   value={clientVatReturnFormData.fee}
                   onChange={(e) =>
-                    setClientVatReturnFormData({
-                      ...clientVatReturnFormData,
-                      fee: e.target.value,
-                    })
+                    handleFormDataChange(
+                      clientVatReturnFormData,
+                      setClientVatReturnFormData,
+                      "fee",
+                      e.target.value
+                    )
                   }
                   className={`${style.input} w-full `}
                 />
@@ -710,10 +775,12 @@ export default function NewJobModal({ setIsOpen }) {
               <select
                 value={clientVatReturnFormData.lead}
                 onChange={(e) =>
-                  setClientVatReturnFormData({
-                    ...clientVatReturnFormData,
-                    lead: e.target.value,
-                  })
+                  handleFormDataChange(
+                    clientVatReturnFormData,
+                    setClientVatReturnFormData,
+                    "lead",
+                    e.target.value
+                  )
                 }
                 className={`${style.input} w-full `}
               >
@@ -727,10 +794,12 @@ export default function NewJobModal({ setIsOpen }) {
               <select
                 value={clientVatReturnFormData.jobHolder}
                 onChange={(e) =>
-                  setClientVatReturnFormData({
-                    ...clientVatReturnFormData,
-                    jobHolder: e.target.value,
-                  })
+                  handleFormDataChange(
+                    clientVatReturnFormData,
+                    setClientVatReturnFormData,
+                    "jobHolder",
+                    e.target.value
+                  )
                 }
                 className={`${style.input} w-full `}
               >
@@ -765,10 +834,12 @@ export default function NewJobModal({ setIsOpen }) {
                   placeholder="Year End"
                   value={clientPersonalTaxFormData.yearEnd}
                   onChange={(e) =>
-                    setClientPersonalTaxFormData({
-                      ...clientPersonalTaxFormData,
-                      yearEnd: e.target.value,
-                    })
+                    handleFormDataChange(
+                      clientPersonalTaxFormData,
+                      setClientPersonalTaxFormData,
+                      "yearEnd",
+                      e.target.value
+                    )
                   }
                   className={`${style.input} w-full `}
                 />
@@ -780,10 +851,12 @@ export default function NewJobModal({ setIsOpen }) {
                   placeholder="Job Deadline"
                   value={clientPersonalTaxFormData.jobDeadline}
                   onChange={(e) =>
-                    setClientPersonalTaxFormData({
-                      ...clientPersonalTaxFormData,
-                      jobDeadline: e.target.value,
-                    })
+                    handleFormDataChange(
+                      clientPersonalTaxFormData,
+                      setClientPersonalTaxFormData,
+                      "jobDeadline",
+                      e.target.value
+                    )
                   }
                   className={`${style.input} w-full `}
                 />
@@ -795,10 +868,12 @@ export default function NewJobModal({ setIsOpen }) {
                   placeholder="Work Deadline"
                   value={clientPersonalTaxFormData.workDeadline}
                   onChange={(e) =>
-                    setClientPersonalTaxFormData({
-                      ...clientPersonalTaxFormData,
-                      workDeadline: e.target.value,
-                    })
+                    handleFormDataChange(
+                      clientPersonalTaxFormData,
+                      setClientPersonalTaxFormData,
+                      "workDeadline",
+                      e.target.value
+                    )
                   }
                   className={`${style.input} w-full `}
                 />
@@ -810,10 +885,12 @@ export default function NewJobModal({ setIsOpen }) {
                   placeholder="Hours"
                   value={clientPersonalTaxFormData.hours}
                   onChange={(e) =>
-                    setClientPersonalTaxFormData({
-                      ...clientPersonalTaxFormData,
-                      hours: e.target.value,
-                    })
+                    handleFormDataChange(
+                      clientPersonalTaxFormData,
+                      setClientPersonalTaxFormData,
+                      "hours",
+                      e.target.value
+                    )
                   }
                   className={`${style.input} w-full `}
                 />
@@ -824,10 +901,12 @@ export default function NewJobModal({ setIsOpen }) {
                   placeholder="Fee"
                   value={clientPersonalTaxFormData.fee}
                   onChange={(e) =>
-                    setClientPersonalTaxFormData({
-                      ...clientPersonalTaxFormData,
-                      fee: e.target.value,
-                    })
+                    handleFormDataChange(
+                      clientPersonalTaxFormData,
+                      setClientPersonalTaxFormData,
+                      "fee",
+                      e.target.value
+                    )
                   }
                   className={`${style.input} w-full `}
                 />
@@ -835,10 +914,12 @@ export default function NewJobModal({ setIsOpen }) {
               <select
                 value={clientPersonalTaxFormData.lead}
                 onChange={(e) =>
-                  setClientPersonalTaxFormData({
-                    ...clientPersonalTaxFormData,
-                    lead: e.target.value,
-                  })
+                  handleFormDataChange(
+                    clientPersonalTaxFormData,
+                    setClientPersonalTaxFormData,
+                    "lead",
+                    e.target.value
+                  )
                 }
                 className={`${style.input} w-full `}
               >
@@ -852,10 +933,12 @@ export default function NewJobModal({ setIsOpen }) {
               <select
                 value={clientPersonalTaxFormData.jobHolder}
                 onChange={(e) =>
-                  setClientPersonalTaxFormData({
-                    ...clientPersonalTaxFormData,
-                    jobHolder: e.target.value,
-                  })
+                  handleFormDataChange(
+                    clientPersonalTaxFormData,
+                    setClientPersonalTaxFormData,
+                    "jobHolder",
+                    e.target.value
+                  )
                 }
                 className={`${style.input} w-full `}
               >
@@ -890,10 +973,12 @@ export default function NewJobModal({ setIsOpen }) {
                   placeholder="Year End"
                   value={clientAccountsFormData.yearEnd}
                   onChange={(e) =>
-                    setClientAccountsFormData({
-                      ...clientAccountsFormData,
-                      yearEnd: e.target.value,
-                    })
+                    handleFormDataChange(
+                      clientAccountsFormData,
+                      setClientAccountsFormData,
+                      "yearEnd",
+                      e.target.value
+                    )
                   }
                   className={`${style.input} w-full `}
                 />
@@ -905,10 +990,12 @@ export default function NewJobModal({ setIsOpen }) {
                   placeholder="Job Deadline"
                   value={clientAccountsFormData.jobDeadline}
                   onChange={(e) =>
-                    setClientAccountsFormData({
-                      ...clientAccountsFormData,
-                      jobDeadline: e.target.value,
-                    })
+                    handleFormDataChange(
+                      clientAccountsFormData,
+                      setClientAccountsFormData,
+                      "jobDeadline",
+                      e.target.value
+                    )
                   }
                   className={`${style.input} w-full `}
                 />
@@ -920,10 +1007,12 @@ export default function NewJobModal({ setIsOpen }) {
                   placeholder="Work Deadline"
                   value={clientAccountsFormData.workDeadline}
                   onChange={(e) =>
-                    setClientAccountsFormData({
-                      ...clientAccountsFormData,
-                      workDeadline: e.target.value,
-                    })
+                    handleFormDataChange(
+                      clientAccountsFormData,
+                      setClientAccountsFormData,
+                      "workDeadline",
+                      e.target.value
+                    )
                   }
                   className={`${style.input} w-full `}
                 />
@@ -935,10 +1024,12 @@ export default function NewJobModal({ setIsOpen }) {
                   placeholder="Hours"
                   value={clientAccountsFormData.hours}
                   onChange={(e) =>
-                    setClientAccountsFormData({
-                      ...clientAccountsFormData,
-                      hours: e.target.value,
-                    })
+                    handleFormDataChange(
+                      clientAccountsFormData,
+                      setClientAccountsFormData,
+                      "hours",
+                      e.target.value
+                    )
                   }
                   className={`${style.input} w-full `}
                 />
@@ -949,10 +1040,12 @@ export default function NewJobModal({ setIsOpen }) {
                   placeholder="Fee"
                   value={clientAccountsFormData.fee}
                   onChange={(e) =>
-                    setClientAccountsFormData({
-                      ...clientAccountsFormData,
-                      fee: e.target.value,
-                    })
+                    handleFormDataChange(
+                      clientAccountsFormData,
+                      setClientAccountsFormData,
+                      "fee",
+                      e.target.value
+                    )
                   }
                   className={`${style.input} w-full `}
                 />
@@ -960,10 +1053,12 @@ export default function NewJobModal({ setIsOpen }) {
               <select
                 value={clientAccountsFormData.lead}
                 onChange={(e) =>
-                  setClientAccountsFormData({
-                    ...clientAccountsFormData,
-                    lead: e.target.value,
-                  })
+                  handleFormDataChange(
+                    clientAccountsFormData,
+                    setClientAccountsFormData,
+                    "lead",
+                    e.target.value
+                  )
                 }
                 className={`${style.input} w-full `}
               >
@@ -977,10 +1072,12 @@ export default function NewJobModal({ setIsOpen }) {
               <select
                 value={clientAccountsFormData.jobHolder}
                 onChange={(e) =>
-                  setClientAccountsFormData({
-                    ...clientAccountsFormData,
-                    jobHolder: e.target.value,
-                  })
+                  handleFormDataChange(
+                    clientAccountsFormData,
+                    setClientAccountsFormData,
+                    "jobHolder",
+                    e.target.value
+                  )
                 }
                 className={`${style.input} w-full `}
               >
@@ -1015,10 +1112,12 @@ export default function NewJobModal({ setIsOpen }) {
                   placeholder="Year End"
                   value={clientCompanySecFormData.yearEnd}
                   onChange={(e) =>
-                    setClientCompanySecFormData({
-                      ...clientCompanySecFormData,
-                      yearEnd: e.target.value,
-                    })
+                    handleFormDataChange(
+                      clientCompanySecFormData,
+                      setClientCompanySecFormData,
+                      "yearEnd",
+                      e.target.value
+                    )
                   }
                   className={`${style.input} w-full `}
                 />
@@ -1030,10 +1129,12 @@ export default function NewJobModal({ setIsOpen }) {
                   placeholder="Job Deadline"
                   value={clientCompanySecFormData.jobDeadline}
                   onChange={(e) =>
-                    setClientCompanySecFormData({
-                      ...clientCompanySecFormData,
-                      jobDeadline: e.target.value,
-                    })
+                    handleFormDataChange(
+                      clientCompanySecFormData,
+                      setClientCompanySecFormData,
+                      "jobDeadline",
+                      e.target.value
+                    )
                   }
                   className={`${style.input} w-full `}
                 />
@@ -1045,10 +1146,12 @@ export default function NewJobModal({ setIsOpen }) {
                   placeholder="Work Deadline"
                   value={clientCompanySecFormData.workDeadline}
                   onChange={(e) =>
-                    setClientCompanySecFormData({
-                      ...clientCompanySecFormData,
-                      workDeadline: e.target.value,
-                    })
+                    handleFormDataChange(
+                      clientCompanySecFormData,
+                      setClientCompanySecFormData,
+                      "workDeadline",
+                      e.target.value
+                    )
                   }
                   className={`${style.input} w-full `}
                 />
@@ -1060,10 +1163,12 @@ export default function NewJobModal({ setIsOpen }) {
                   placeholder="Hours"
                   value={clientCompanySecFormData.hours}
                   onChange={(e) =>
-                    setClientCompanySecFormData({
-                      ...clientCompanySecFormData,
-                      hours: e.target.value,
-                    })
+                    handleFormDataChange(
+                      clientCompanySecFormData,
+                      setClientCompanySecFormData,
+                      "hours",
+                      e.target.value
+                    )
                   }
                   className={`${style.input} w-full `}
                 />
@@ -1074,10 +1179,12 @@ export default function NewJobModal({ setIsOpen }) {
                   placeholder="Fee"
                   value={clientCompanySecFormData.fee}
                   onChange={(e) =>
-                    setClientCompanySecFormData({
-                      ...clientCompanySecFormData,
-                      fee: e.target.value,
-                    })
+                    handleFormDataChange(
+                      clientCompanySecFormData,
+                      setClientCompanySecFormData,
+                      "fee",
+                      e.target.value
+                    )
                   }
                   className={`${style.input} w-full `}
                 />
@@ -1085,10 +1192,12 @@ export default function NewJobModal({ setIsOpen }) {
               <select
                 value={clientCompanySecFormData.lead}
                 onChange={(e) =>
-                  setClientCompanySecFormData({
-                    ...clientCompanySecFormData,
-                    lead: e.target.value,
-                  })
+                  handleFormDataChange(
+                    clientCompanySecFormData,
+                    setClientCompanySecFormData,
+                    "lead",
+                    e.target.value
+                  )
                 }
                 className={`${style.input} w-full `}
               >
@@ -1102,10 +1211,12 @@ export default function NewJobModal({ setIsOpen }) {
               <select
                 value={clientCompanySecFormData.jobHolder}
                 onChange={(e) =>
-                  setClientCompanySecFormData({
-                    ...clientCompanySecFormData,
-                    jobHolder: e.target.value,
-                  })
+                  handleFormDataChange(
+                    clientCompanySecFormData,
+                    setClientCompanySecFormData,
+                    "jobHolder",
+                    e.target.value
+                  )
                 }
                 className={`${style.input} w-full `}
               >
@@ -1140,10 +1251,12 @@ export default function NewJobModal({ setIsOpen }) {
                   placeholder="Year End"
                   value={clientAddressFormData.yearEnd}
                   onChange={(e) =>
-                    setClientAddressFormData({
-                      ...clientAddressFormData,
-                      yearEnd: e.target.value,
-                    })
+                    handleFormDataChange(
+                      clientAddressFormData,
+                      setClientAddressFormData,
+                      "yearEnd",
+                      e.target.value
+                    )
                   }
                   className={`${style.input} w-full `}
                 />
@@ -1155,10 +1268,12 @@ export default function NewJobModal({ setIsOpen }) {
                   placeholder="Job Deadline"
                   value={clientAddressFormData.jobDeadline}
                   onChange={(e) =>
-                    setClientAddressFormData({
-                      ...clientAddressFormData,
-                      jobDeadline: e.target.value,
-                    })
+                    handleFormDataChange(
+                      clientAddressFormData,
+                      setClientAddressFormData,
+                      "jobDeadline",
+                      e.target.value
+                    )
                   }
                   className={`${style.input} w-full `}
                 />
@@ -1170,10 +1285,12 @@ export default function NewJobModal({ setIsOpen }) {
                   placeholder="Work Deadline"
                   value={clientAddressFormData.workDeadline}
                   onChange={(e) =>
-                    setClientAddressFormData({
-                      ...clientAddressFormData,
-                      workDeadline: e.target.value,
-                    })
+                    handleFormDataChange(
+                      clientAddressFormData,
+                      setClientAddressFormData,
+                      "workDeadline",
+                      e.target.value
+                    )
                   }
                   className={`${style.input} w-full `}
                 />
@@ -1185,10 +1302,12 @@ export default function NewJobModal({ setIsOpen }) {
                   placeholder="Hours"
                   value={clientAddressFormData.hours}
                   onChange={(e) =>
-                    setClientAddressFormData({
-                      ...clientAddressFormData,
-                      hours: e.target.value,
-                    })
+                    handleFormDataChange(
+                      clientAddressFormData,
+                      setClientAddressFormData,
+                      "hours",
+                      e.target.value
+                    )
                   }
                   className={`${style.input} w-full `}
                 />
@@ -1199,10 +1318,12 @@ export default function NewJobModal({ setIsOpen }) {
                   placeholder="Fee"
                   value={clientAddressFormData.fee}
                   onChange={(e) =>
-                    setClientAddressFormData({
-                      ...clientAddressFormData,
-                      fee: e.target.value,
-                    })
+                    handleFormDataChange(
+                      clientAddressFormData,
+                      setClientAddressFormData,
+                      "fee",
+                      e.target.value
+                    )
                   }
                   className={`${style.input} w-full `}
                 />
@@ -1210,10 +1331,12 @@ export default function NewJobModal({ setIsOpen }) {
               <select
                 value={clientAddressFormData.lead}
                 onChange={(e) =>
-                  setClientAddressFormData({
-                    ...clientAddressFormData,
-                    lead: e.target.value,
-                  })
+                  handleFormDataChange(
+                    clientAddressFormData,
+                    setClientAddressFormData,
+                    "lead",
+                    e.target.value
+                  )
                 }
                 className={`${style.input} w-full `}
               >
@@ -1227,10 +1350,12 @@ export default function NewJobModal({ setIsOpen }) {
               <select
                 value={clientAddressFormData.jobHolder}
                 onChange={(e) =>
-                  setClientAddressFormData({
-                    ...clientAddressFormData,
-                    jobHolder: e.target.value,
-                  })
+                  handleFormDataChange(
+                    clientAddressFormData,
+                    setClientAddressFormData,
+                    "jobHolder",
+                    e.target.value
+                  )
                 }
                 className={`${style.input} w-full `}
               >

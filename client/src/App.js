@@ -7,7 +7,6 @@ import AllJobs from "./pages/Jobs/AllJobs";
 import AllTasks from "./pages/Tasks/AllTasks";
 import AllLists from "./pages/lists/AllLists";
 import AllUsers from "./pages/Auth/AllUsers";
-import Header from "./components/Loyout/Header";
 import Profile from "./pages/Auth/Profile";
 
 function App() {

@@ -36,7 +36,7 @@ export default function Login() {
       }
     } catch (error) {
       console.log(error);
-      toast.error(error.response.data.message, { duration: 2000 });
+      toast.error(error?.response?.data?.message, { duration: 2000 });
       setLoading(false);
     }
   };
