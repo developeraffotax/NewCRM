@@ -54,9 +54,9 @@ export default function AllJobs() {
   // -------------- Department Lenght--------->
   const getDepartmentCount = (department) => {
     if (department === "All") {
-      return tableData.length;
+      return tableData?.length;
     }
-    return tableData.filter((item) => item.job.jobName === department).length;
+    return tableData?.filter((item) => item?.job?.jobName === department)?.length;
   };
 
   // Get All Users
