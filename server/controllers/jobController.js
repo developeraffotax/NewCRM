@@ -1,6 +1,7 @@
 import jobsModel from "../models/jobsModel.js";
 
 // Create Job
+
 export const createJob = async (req, res) => {
   try {
     const {
@@ -392,3 +393,5 @@ export const singleClientJob = async (req, res) => {
     });
   }
 };
+
+// Update Timer
