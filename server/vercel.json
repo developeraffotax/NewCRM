@@ -7,8 +7,4 @@
     "routes": [
        { "src": "/(.*)", "dest": "/index.js" }
     ]
-<<<<<<< HEAD
- }
-=======
- }
->>>>>>> 0e89957c4b1deac0f82225480fd4d7b5b0eaf348
+
