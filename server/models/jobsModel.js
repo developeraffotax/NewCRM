@@ -23,7 +23,7 @@ const jobSchema = new mongoose.Schema(
     },
     jobStatus: {
       type: String,
-      default: "progress",
+      default: "Progress",
     },
     notes: {
       type: String,
@@ -37,6 +37,16 @@ const jobSchema = new mongoose.Schema(
     jobHolder: {
       type: String,
     },
+  },
+  { timestamps: true }
+);
+
+// Comment Schema
+const commentsSchema = new mongoose.Schema(
+  {
+    user: Object,
+    comment: String,
+    commentReplies: [Object],
   },
   { timestamps: true }
 );
@@ -98,7 +108,12 @@ const clientSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
-    job: [jobSchema],
+    job: jobSchema,
+    totalTime: {
+      type: String,
+      default: "O sec",
+    },
+    comments: [commentsSchema],
   },
   { timestamps: true }
 );

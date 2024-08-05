@@ -93,7 +93,7 @@ export default function Header() {
   };
 
   return (
-    <div className="w-full h-[3.8rem] bg-gray-200 sticky top-0 left-0 z-[100] ">
+    <div className="w-full h-[3.8rem] bg-gray-200">
       <div className="w-full h-full flex items-center justify-between sm:px-4 px-6 py-2">
         <Link to={"/dashboard"} className="">
           <img src="/logo.png" alt="Logo" className="h-[3.3rem] w-[8rem]" />

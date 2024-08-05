@@ -86,7 +86,7 @@ input::-webkit-inner-spin-button {
 }
 ::-webkit-scrollbar {
   width: 0.2rem;
-  height: 0.1rem;
+  height: 0.3rem;
 }
 ::-webkit-scrollbar-track {
   background: #afadad;
