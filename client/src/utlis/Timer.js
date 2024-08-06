@@ -1,12 +1,15 @@
-// TimerComponent.jsx
-import React, { useState, useEffect } from "react";
+import React, {
+  useState,
+  useEffect,
+  useImperativeHandle,
+  forwardRef,
+} from "react";
 import axios from "axios";
-
 import { FaCirclePlay } from "react-icons/fa6";
 import { IoStopCircle } from "react-icons/io5";
 import { useAuth } from "../context/authContext";
 
-export const Timer = ({ clientId, jobId }) => {
+export const Timer = forwardRef(({ clientId, jobId, setIsShow, note }, ref) => {
   const [timerId, setTimerId] = useState(null);
   const [isRunning, setIsRunning] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(0);
@@ -15,7 +18,6 @@ export const Timer = ({ clientId, jobId }) => {
   const { anyTimerRunning, setAnyTimerRunning } = useAuth();
 
   useEffect(() => {
-    // Fetch the current timer status when the component mounts
     const fetchTimerStatus = async () => {
       console.log(jobId);
       try {
@@ -79,11 +81,12 @@ export const Timer = ({ clientId, jobId }) => {
   const stopTimer = async () => {
     try {
       await axios.put(
-        `${process.env.REACT_APP_API_URL}/api/v1/timer/stop/timer/${timerId}`
+        `${process.env.REACT_APP_API_URL}/api/v1/timer/stop/timer/${timerId}`,
+        { note }
       );
       setIsRunning(false);
       setAnyTimerRunning(false);
-
+      setIsShow(false);
       setTimerId(null);
       setElapsedTime(0);
       gettotalTime(timerId);
@@ -92,7 +95,6 @@ export const Timer = ({ clientId, jobId }) => {
     }
   };
 
-  //   Get Total Time
   const gettotalTime = async (id) => {
     try {
       const { data } = await axios.get(
@@ -107,41 +109,49 @@ export const Timer = ({ clientId, jobId }) => {
     }
   };
 
+  useImperativeHandle(ref, () => ({
+    stopTimer,
+  }));
+
   return (
-    <div className="flex items-center gap-[2px]  ">
-      <div className="flex space-x-4">
-        {!isRunning ? (
-          <button
-            onClick={startTimer}
-            disabled={anyTimerRunning}
-            className={`flex items-center justify-center ${
-              anyTimerRunning ? "cursor-not-allowed" : "cursor-pointer"
-            }`}
-          >
-            <FaCirclePlay className="h-6 w-6  text-sky-500 hover:text-sky-600 " />
-          </button>
-        ) : (
-          <button
-            onClick={stopTimer}
-            disabled={!isRunning}
-            className="flex items-center justify-center  disabled:cursor-not-allowed"
-          >
-            <IoStopCircle className="h-6 w-6  text-red-500 hover:text-red-600 animate-pulse " />
-          </button>
-        )}
-      </div>
-      {isRunning && (
-        <div className="text-[13px] text-gray-800 font-semibold ">
-          {Math.floor(elapsedTime / 3600)
-            .toString()
-            .padStart(2, "0")}
-          :
-          {Math.floor((elapsedTime % 3600) / 60)
-            .toString()
-            .padStart(2, "0")}
-          :{(elapsedTime % 60).toString().padStart(2, "0")}
+    <>
+      <div className="w-full h-full relative">
+        <div className="flex items-center gap-[2px]  ">
+          <div className="flex space-x-4">
+            {!isRunning ? (
+              <button
+                onClick={startTimer}
+                disabled={anyTimerRunning}
+                className={`flex items-center justify-center ${
+                  anyTimerRunning ? "cursor-not-allowed" : "cursor-pointer"
+                }`}
+              >
+                <FaCirclePlay className="h-6 w-6  text-sky-500 hover:text-sky-600 " />
+              </button>
+            ) : (
+              <button
+                onClick={() => setIsShow(true)}
+                disabled={!isRunning}
+                className="flex items-center justify-center  disabled:cursor-not-allowed"
+              >
+                <IoStopCircle className="h-6 w-6  text-red-500 hover:text-red-600 animate-pulse " />
+              </button>
+            )}
+          </div>
+          {isRunning && (
+            <div className="text-[13px] text-gray-800 font-semibold ">
+              {Math.floor(elapsedTime / 3600)
+                .toString()
+                .padStart(2, "0")}
+              :
+              {Math.floor((elapsedTime % 3600) / 60)
+                .toString()
+                .padStart(2, "0")}
+              :{(elapsedTime % 60).toString().padStart(2, "0")}
+            </div>
+          )}
         </div>
-      )}
-    </div>
+      </div>
+    </>
   );
-};
+});

@@ -35,6 +35,7 @@ export const startTimer = async (req, res) => {
 export const stopTimer = async (req, res) => {
   try {
     const timerId = req.params.id;
+    const { note } = req.body;
     const endTime = new Date().toISOString();
 
     const isExisting = await timerModel.findById({ _id: timerId });
@@ -47,7 +48,7 @@ export const stopTimer = async (req, res) => {
 
     const updateTimer = await timerModel.findByIdAndUpdate(
       { _id: isExisting._id },
-      { endTime: endTime },
+      { endTime: endTime, note: note },
       { new: true }
     );
 

@@ -103,100 +103,6 @@ export const getAllClients = async (req, res) => {
   }
 };
 
-// Update Client Jobs
-
-export const updateClientJob = async () => {
-  try {
-    const id = req.params.id;
-    const {
-      clientName,
-      regNumber,
-      companyName,
-      email,
-      totalHours,
-      currentDate,
-      source,
-      clientType,
-      country,
-      fee,
-      ctLogin,
-      pyeLogin,
-      trLogin,
-      vatLogin,
-      authCode,
-      utr,
-      isActive,
-      job,
-    } = req.body;
-
-    if (!clientName) {
-      return res.status(400).send({
-        success: false,
-        message: "Client name is required!",
-      });
-    }
-    if (!companyName) {
-      return res.status(400).send({
-        success: false,
-        message: "Company name is required!",
-      });
-    }
-
-    if (!job) {
-      return res.status(400).send({
-        success: false,
-        message: "Job is required!",
-      });
-    }
-
-    const clientJob = await jobsModel.findById({ _id: id });
-    if (!clientJob) {
-      return res.status(400).send({
-        success: false,
-        message: "Client Job not found!",
-      });
-    }
-
-    const updateClientJob = await jobsModel.findByIdAndUpdate(
-      { _id: clientJob._id },
-      {
-        clientName,
-        regNumber,
-        companyName,
-        email,
-        totalHours,
-        currentDate,
-        source,
-        clientType,
-        country,
-        fee,
-        ctLogin,
-        pyeLogin,
-        trLogin,
-        vatLogin,
-        authCode,
-        utr,
-        isActive,
-        job,
-      },
-      { new: true }
-    );
-
-    res.status(200).send({
-      success: true,
-      message: "Client job update successfully!",
-      ClientJob: updateClientJob,
-    });
-  } catch (error) {
-    console.log(error);
-    res.status(500).send({
-      success: false,
-      message: "Error in update client job!",
-      error: error,
-    });
-  }
-};
-
 // Update Client Status
 
 export const updateStatus = async (req, res) => {
@@ -389,6 +295,155 @@ export const singleClientJob = async (req, res) => {
       success: false,
       message: "Error in get single job!",
       error: error,
+    });
+  }
+};
+
+// Get Client with all jobs
+export const getClientWithJobs = async (req, res) => {
+  try {
+    const { companyName } = req.query;
+
+    if (!companyName) {
+      return res.status(400).send({
+        success: false,
+        message: "Company Name is required!",
+      });
+    }
+
+    const clientJobs = await jobsModel
+      .find({ companyName: companyName })
+      .select("job");
+
+    if (!clientJobs) {
+      return res.status(400).send({
+        success: false,
+        message: "Job not found!",
+      });
+    } else {
+      res.status(200).send({
+        success: true,
+        clientJobs: clientJobs,
+      });
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      success: false,
+      message: "Error in get single job!",
+      error: error,
+    });
+  }
+};
+
+// Update Client Jobs
+
+export const updateClientJob = async (req, res) => {
+  try {
+    const {
+      clientName,
+      regNumber,
+      companyName,
+      email,
+      totalHours,
+      currentDate,
+      source,
+      clientType,
+      country,
+      fee,
+      ctLogin,
+      pyeLogin,
+      trLogin,
+      vatLogin,
+      authCode,
+      utr,
+      isActive,
+      jobs,
+    } = req.body;
+
+    // Validation
+    if (!clientName) {
+      return res.status(400).send({
+        success: false,
+        message: "Client name is required!",
+      });
+    }
+    if (!companyName) {
+      return res.status(400).send({
+        success: false,
+        message: "Company name is required!",
+      });
+    }
+    if (!jobs || jobs.length === 0) {
+      return res.status(400).send({
+        success: false,
+        message: "At least one job is required!",
+      });
+    }
+
+    // Iterate over each job and either update or create
+    for (const jobData of jobs) {
+      if (jobData.clientId) {
+        // If clientId exists, update the job
+        await jobsModel.findByIdAndUpdate(
+          jobData.clientId,
+          {
+            clientName,
+            regNumber,
+            companyName,
+            email,
+            totalHours,
+            currentDate,
+            source,
+            clientType,
+            country,
+            fee,
+            ctLogin,
+            pyeLogin,
+            trLogin,
+            vatLogin,
+            authCode,
+            utr,
+            isActive,
+            job: jobData,
+          },
+          { new: true }
+        );
+      } else {
+        // If clientId does not exist, create a new job entry
+        await jobsModel.create({
+          clientName,
+          regNumber,
+          companyName,
+          email,
+          totalHours,
+          currentDate,
+          source,
+          clientType,
+          country,
+          fee,
+          ctLogin,
+          pyeLogin,
+          trLogin,
+          vatLogin,
+          authCode,
+          utr,
+          isActive,
+          job: jobData,
+        });
+      }
+    }
+
+    res.status(200).send({
+      success: true,
+      message: "Client job(s) updated successfully!",
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      success: false,
+      message: "Error in updating client job(s)!",
+      error: error.message,
     });
   }
 };

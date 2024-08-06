@@ -1,5 +1,5 @@
 import axios from "axios";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { GoGoal } from "react-icons/go";
 import { MdDateRange, MdInsertComment } from "react-icons/md";
@@ -10,12 +10,36 @@ import Loader from "../../utlis/Loader";
 import { Timer } from "../../utlis/Timer";
 import { useAuth } from "../../context/authContext";
 import { FaRegUser } from "react-icons/fa";
+import { FaEdit } from "react-icons/fa";
+import { CgClose } from "react-icons/cg";
+import EditJobModal from "../../components/Modals/EditJobModal";
+import { AiFillDelete } from "react-icons/ai";
+import { IoClose } from "react-icons/io5";
+import { style } from "../../utlis/CommonStyle";
+import Swal from "sweetalert2";
 
-export default function JobDetail({ clientId, handleStatus }) {
+export default function JobDetail({
+  clientId,
+  handleStatus,
+  allClientJobData,
+  handleDeleteJob,
+}) {
   const [clientDetail, setClientDetail] = useState(null);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("jobDetail");
   const { auth } = useAuth();
+  const [isOpen, setIsOpen] = useState(false);
+  const [jobId, setJobId] = useState("");
+  const [isShow, setIsShow] = useState(false);
+  const [note, setNote] = useState("");
+  const timerRef = useRef();
+
+  // ---------Stop Timer ----------->
+  const handleStopTimer = () => {
+    if (timerRef.current) {
+      timerRef.current.stopTimer();
+    }
+  };
 
   //    Single Client
 
@@ -27,7 +51,6 @@ export default function JobDetail({ clientId, handleStatus }) {
       );
       if (data) {
         setLoading(false);
-
         setClientDetail(data.clientJob);
       }
     } catch (error) {
@@ -62,12 +85,49 @@ export default function JobDetail({ clientId, handleStatus }) {
     }
   };
 
+  // ------------Delete Conformation-------->
+  const handleDeleteConfirmation = (jobId) => {
+    Swal.fire({
+      title: "Are you sure?",
+      text: "You won't be able to revert this!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, delete it!",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        handleDeleteJob(jobId);
+        Swal.fire("Deleted!", "Your job has been deleted.", "success");
+      }
+    });
+  };
+
   return (
     <>
       {loading ? (
         <Loader />
       ) : (
-        <div className="w-full  mt-2 overflow-y-scroll h-[calc(100vh-7rem)] pb-4 hidden1 ">
+        <div className="w-full relative  mt-2 overflow-y-scroll h-[calc(100vh-7rem)] pb-4 hidden1 ">
+          <div className="absolute top-[.5rem] right-[1rem] flex items-center gap-4">
+            <span
+              className=""
+              title="Edit Job"
+              onClick={() => {
+                setJobId(clientDetail._id);
+                setIsOpen(true);
+              }}
+            >
+              <FaEdit className="h-5 w-5 cursor-pointer text-gray-800 hover:text-gray-950" />
+            </span>
+            <span
+              className=""
+              title="Delete Job"
+              onClick={() => handleDeleteConfirmation(clientDetail._id)}
+            >
+              <AiFillDelete className="h-5 w-5 cursor-pointer text-red-500 hover:text-red-600" />
+            </span>
+          </div>
           <div className="w-full flex flex-col gap-3">
             <div className="flex items-center gap-4">
               <span className="flex items-center gap-1 text-gray-500 w-[30%]">
@@ -121,7 +181,13 @@ export default function JobDetail({ clientId, handleStatus }) {
                 <RiTimerLine className="h-4 w-4 text-gray-500" /> Stack Timer
               </span>
               <span className="text-[17px] font-medium text-gray-800">
-                <Timer clientId={auth?.user?.id} jobId={clientDetail?._id} />
+                <Timer
+                  ref={timerRef}
+                  clientId={auth?.user?.id}
+                  jobId={clientDetail?._id}
+                  setIsShow={setIsShow}
+                  note={note}
+                />
               </span>
             </div>
             {/*  */}
@@ -418,6 +484,62 @@ export default function JobDetail({ clientId, handleStatus }) {
               "Comments"
             )}
           </div>
+
+          {/* Edit Modal */}
+          {isOpen && (
+            <div className="fixed top-0 left-0 w-full h-screen z-[999] bg-gray-100 flex items-center justify-center py-6  px-4">
+              <span
+                className="absolute top-[4px] right-[.8rem] cursor-pointer z-10 p-1 rounded-lg bg-white/50 hover:bg-gray-300/70 transition-all duration-150 flex items-center justify-center"
+                onClick={() => setIsOpen(false)}
+              >
+                <CgClose className="h-5 w-5 text-black" />
+              </span>
+              <EditJobModal
+                setIsOpen={setIsOpen}
+                allClientJobData={allClientJobData}
+                jobId={jobId}
+              />
+            </div>
+          )}
+
+          {/* Stop Timer */}
+          {isShow && (
+            <div className="fixed top-0 left-0 z-[999] w-full h-full bg-gray-300/80 flex items-center justify-center">
+              <div className="w-[32rem] rounded-md bg-white shadow-md">
+                <div className="flex  flex-col gap-3 ">
+                  <div className=" w-full flex items-center justify-between py-2 mt-1 px-4">
+                    <h3 className="text-[19px] font-semibold text-gray-800">
+                      Enter your note here
+                    </h3>
+                    <span
+                      onClick={() => {
+                        setIsShow(false);
+                      }}
+                    >
+                      <IoClose className="text-black cursor-pointer h-6 w-6 " />
+                    </span>
+                  </div>
+                  <hr className="w-full h-[1px] bg-gray-500 " />
+                  <div className=" w-full px-4 py-2 flex-col gap-4">
+                    <textarea
+                      value={note}
+                      onChange={(e) => setNote(e.target.value)}
+                      placeholder="Add note here..."
+                      className="w-full h-[6rem] rounded-md resize-none py-1 px-2 shadow border-2 border-gray-700"
+                    />
+                    <div className="flex items-center justify-end mt-4">
+                      <button
+                        className={`${style.btn}`}
+                        onClick={handleStopTimer}
+                      >
+                        Submit
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </>

@@ -3,6 +3,7 @@ import {
   createJob,
   deleteClientJob,
   getAllClients,
+  getClientWithJobs,
   singleClientJob,
   updateClientJob,
   updateJobHolder,
@@ -19,9 +20,6 @@ router.post("/create/client/job", requiredSignIn, createJob);
 // Get All Client
 router.get("/all/client/job", getAllClients);
 
-// Update Client Job
-router.post("/update/client/job/:id", requiredSignIn, updateClientJob);
-
 // Update Status
 router.patch("/update/status/:id", requiredSignIn, updateStatus);
 
@@ -35,6 +33,12 @@ router.patch("/update/jobholder/:id", requiredSignIn, updateJobHolder);
 router.get("/single/client/:id", requiredSignIn, singleClientJob);
 
 // Delete Client
-router.delete("/delete/client/job/:id", requiredSignIn, deleteClientJob);
+router.delete("/delete/job/:id", requiredSignIn, deleteClientJob);
+
+// Get Client with all jobs
+router.get("/jobs", getClientWithJobs);
+
+// Update Client Job
+router.put("/update/job", requiredSignIn, updateClientJob);
 
 export default router;

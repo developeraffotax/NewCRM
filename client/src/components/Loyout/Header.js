@@ -101,7 +101,7 @@ export default function Header() {
         {/* Search */}
         <div className=" hidden sm:flex">
           <form onSubmit={handleSearch} className="relative">
-            <span className="absolute top-[.6rem] left-2 z-10">
+            <span className="absolute top-[.6rem] left-2 z-2">
               <IoSearch className="h-5 w-5 text-orange-500" />
             </span>
             <input

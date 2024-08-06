@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import Layout from "../../components/Loyout/Layout";
 import { GoPlus } from "react-icons/go";
 import { style } from "../../utlis/CommonStyle";
@@ -41,6 +41,9 @@ export default function AllJobs() {
   const [companyName, setCompanyName] = useState("");
   const [isComment, setIsComment] = useState(false);
   const [jobId, setJobId] = useState("");
+  const [isShow, setIsShow] = useState(false);
+  const [note, setNote] = useState("");
+  const timerRef = useRef();
 
   const departments = [
     "All",
@@ -52,6 +55,13 @@ export default function AllJobs() {
     "Company Sec",
     "Address",
   ];
+
+  // ---------Stop Timer ----------->
+  const handleStopTimer = () => {
+    if (timerRef.current) {
+      timerRef.current.stopTimer();
+    }
+  };
 
   // -------------- Department Lenght--------->
   const getDepartmentCount = (department) => {
@@ -221,6 +231,24 @@ export default function AllJobs() {
   const getSingleJobDetail = (id) => {
     setClientId(id);
     setShowDetail(true);
+  };
+
+  // ---------Handle Delete Job-------------
+  const handleDeleteJob = async (id) => {
+    const filterData = tableData.filter((item) => item._id !== id);
+    setTableData(filterData);
+    try {
+      const { data } = await axios.delete(
+        `${process.env.REACT_APP_API_URL}/api/v1/client/delete/job/${id}`
+      );
+      if (data) {
+        setShowDetail(false);
+        toast.success("Client job deleted successfully!");
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error(error?.response?.data?.message);
+    }
   };
 
   const columns = useMemo(
@@ -464,7 +492,13 @@ export default function AllJobs() {
               onClick={() => setPlay(!play)}
             >
               <span className="text-[1rem] cursor-pointer">
-                <Timer clientId={auth.user.id} jobId={row.original._id} />
+                <Timer
+                  ref={timerRef}
+                  clientId={auth.user.id}
+                  jobId={row.original._id}
+                  setIsShow={setIsShow}
+                  note={note}
+                />
               </span>
             </div>
           );
@@ -570,9 +604,9 @@ export default function AllJobs() {
           {/*  */}
           <hr className="mb-1 bg-gray-300 w-full h-[1px]" />
           {/* ---------------------Table---------------- */}
-          <div className="w-full h-screen">
+          <div className="w-full h-screen  relative">
             {/* overflow-y-scroll  */}
-            <div className="h-screen hidden1 overflow-y-scroll  ">
+            <div className="h-screen hidden1 overflow-y-scroll   relative ">
               <MaterialReactTable
                 columns={columns}
                 data={active === "All" ? tableData : filterData}
@@ -621,9 +655,9 @@ export default function AllJobs() {
       )}
       {/* Add Modal */}
       {isOpen && (
-        <div className="fixed top-14 left-0 w-full h-screen z-[999] bg-gray-100 flex items-center justify-center py-6  px-4">
+        <div className="fixed top-0 left-0 w-full h-screen z-[999] bg-gray-100 flex items-center justify-center py-6  px-4">
           <span
-            className="absolute top-[2px] right-[.5rem] cursor-pointer z-10 p-1 rounded-lg bg-white/50 hover:bg-gray-300/70 transition-all duration-150 flex items-center justify-center"
+            className="absolute  top-[4px] right-[.8rem]  cursor-pointer z-10 p-1 rounded-lg bg-white/50 hover:bg-gray-300/70 transition-all duration-150 flex items-center justify-center"
             onClick={() => setIsOpen(false)}
           >
             <CgClose className="h-5 w-5 text-black" />
@@ -648,7 +682,12 @@ export default function AllJobs() {
               <IoClose className="h-5 w-5 cursor-pointer" />
             </span>
           </div>
-          <JobDetail clientId={clientId} handleStatus={handleStatusChange} />
+          <JobDetail
+            clientId={clientId}
+            handleStatus={handleStatusChange}
+            allClientJobData={allClientJobData}
+            handleDeleteJob={handleDeleteJob}
+          />
         </div>
       )}
       {/* Comment Modal  */}
@@ -660,6 +699,42 @@ export default function AllJobs() {
             jobId={jobId}
             setJobId={setJobId}
           /> */}
+        </div>
+      )}
+
+      {/* Stop Timer */}
+      {isShow && (
+        <div className="fixed top-0 left-0 z-[999] w-full h-full bg-gray-300/80 flex items-center justify-center">
+          <div className="w-[32rem] rounded-md bg-white shadow-md">
+            <div className="flex  flex-col gap-3 ">
+              <div className=" w-full flex items-center justify-between py-2 mt-1 px-4">
+                <h3 className="text-[19px] font-semibold text-gray-800">
+                  Enter your note here
+                </h3>
+                <span
+                  onClick={() => {
+                    setIsShow(false);
+                  }}
+                >
+                  <IoClose className="text-black cursor-pointer h-6 w-6 " />
+                </span>
+              </div>
+              <hr className="w-full h-[1px] bg-gray-500 " />
+              <div className=" w-full px-4 py-2 flex-col gap-4">
+                <textarea
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  placeholder="Add note here..."
+                  className="w-full h-[6rem] rounded-md resize-none py-1 px-2 shadow border-2 border-gray-700"
+                />
+                <div className="flex items-center justify-end mt-4">
+                  <button className={`${style.btn}`} onClick={handleStopTimer}>
+                    Submit
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </Layout>
