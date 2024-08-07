@@ -15,6 +15,7 @@ import { MdInsertComment } from "react-icons/md";
 import toast from "react-hot-toast";
 import { useAuth } from "../../context/authContext";
 import Loader from "../../utlis/Loader";
+import { GrStatusUnknown } from "react-icons/gr";
 
 import { TbCalendarDue } from "react-icons/tb";
 import { IoClose } from "react-icons/io5";
@@ -43,7 +44,10 @@ export default function AllJobs() {
   const [jobId, setJobId] = useState("");
   const [isShow, setIsShow] = useState(false);
   const [note, setNote] = useState("");
+  const [active1, setActive1] = useState("");
+
   const timerRef = useRef();
+  const [showStatus, setShowStatus] = useState(false);
 
   const departments = [
     "All",
@@ -54,6 +58,18 @@ export default function AllJobs() {
     "Accounts",
     "Company Sec",
     "Address",
+  ];
+
+  const dateStatus = ["Due", "Overdue"];
+
+  const status = [
+    "Data",
+    "Progress",
+    "Queries",
+    "Approval",
+    "Submission",
+    "Billing",
+    "Feedback",
   ];
 
   // ---------Stop Timer ----------->
@@ -70,6 +86,86 @@ export default function AllJobs() {
     }
     return tableData.filter((item) => item?.job?.jobName === department)
       ?.length;
+  };
+
+  // -------Due & Overdue count------->
+  const getDueAndOverdueCountByDepartment = (department) => {
+    const filteredData = tableData.filter(
+      (item) => item.job.jobName === department || department === "All"
+    );
+
+    const dueCount = filteredData.filter(
+      (item) => getStatus(item.job.jobDeadline, item.job.yearEnd) === "Due"
+    ).length;
+    const overdueCount = filteredData.filter(
+      (item) => getStatus(item.job.jobDeadline, item.job.yearEnd) === "Overdue"
+    ).length;
+
+    return { due: dueCount, overdue: overdueCount };
+  };
+  // --------------Status Length---------->
+  const getStatusCount = (status, department) => {
+    return tableData.filter((item) =>
+      department === "All"
+        ? item?.job?.jobStatus === status
+        : item?.job?.jobStatus === status && item?.job?.jobName === department
+    )?.length;
+  };
+  // --------------Job_Holder Length---------->
+
+  const getJobHolderCount = (user, department) => {
+    return tableData.filter((item) =>
+      department === "All"
+        ? item?.job?.jobHolder === user
+        : item?.job?.jobHolder === user && item?.job?.jobName === department
+    )?.length;
+  };
+
+  // --------------Filter Data By Department ----------->
+
+  const filterByDep = (value) => {
+    const filteredData = tableData.filter(
+      (item) =>
+        item.job.jobName === value ||
+        item.job.jobStatus === value ||
+        item.job.jobHolder === value
+    );
+
+    setFilterData([...filteredData]);
+  };
+
+  // -------------- Filter Data By Department || Status || Placeholder ----------->
+
+  // Testing
+  const filterByDepStat = (value, dep) => {
+    let filteredData = [];
+
+    if (dep === "All") {
+      filteredData = tableData.filter(
+        (item) =>
+          item.job.jobStatus === value ||
+          item.job.jobHolder === value ||
+          getStatus(item.job.jobDeadline, item.job.yearEnd) === value ||
+          getStatus(item.job.jobDeadline, item.job.yearEnd) === value
+      );
+    } else {
+      filteredData = tableData.filter((item) => {
+        const jobMatches = item.job.jobName === dep;
+        const statusMatches = item.job.jobStatus === value;
+        const holderMatches = item.job.jobHolder === value;
+
+        return (
+          (holderMatches && jobMatches) ||
+          (statusMatches && jobMatches) ||
+          (jobMatches &&
+            getStatus(item.job.jobDeadline, item.job.yearEnd) === value) ||
+          (jobMatches &&
+            getStatus(item.job.jobDeadline, item.job.yearEnd) === value)
+        );
+      });
+    }
+
+    setFilterData([...filteredData]);
   };
 
   // Get All Users
@@ -170,7 +266,7 @@ export default function AllJobs() {
     }
   };
 
-  // ---------------Handle Update Lead ---------->
+  // ---------------Handle Update Job Holder ---------->
   const handleUpdateJobHolder = async (rowId, jobHolder) => {
     if (!rowId) {
       return toast.error("Job id is required!");
@@ -197,15 +293,6 @@ export default function AllJobs() {
     }
   };
 
-  // --------------Filter Data By Department----------->
-
-  const filterByDep = (department) => {
-    const filteredData = tableData.filter(
-      (item) => item.job.jobName === department
-    );
-
-    setFilterData(filteredData);
-  };
   // <-----------Job Status------------->
   const getStatus = (jobDeadline, yearEnd) => {
     const deadline = new Date(jobDeadline);
@@ -213,14 +300,17 @@ export default function AllJobs() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    if (
-      deadline.setHours(0, 0, 0, 0) < today ||
-      yearEndDate.setHours(0, 0, 0, 0) < today
-    ) {
+    const deadlineDate = new Date(deadline);
+    deadlineDate.setHours(0, 0, 0, 0);
+
+    const yearEndDateOnly = new Date(yearEndDate);
+    yearEndDateOnly.setHours(0, 0, 0, 0);
+
+    if (deadlineDate < today || yearEndDateOnly < today) {
       return "Overdue";
     } else if (
-      deadline.setHours(0, 0, 0, 0) === today ||
-      yearEndDate.setHours(0, 0, 0, 0) === today
+      deadlineDate.getTime() === today.getTime() ||
+      yearEndDateOnly.getTime() === today.getTime()
     ) {
       return "Due";
     }
@@ -251,6 +341,26 @@ export default function AllJobs() {
     }
   };
 
+  // ---------------Handle Update Dates-------->
+  const handleUpdateDates = async (jobId, date, type) => {
+    try {
+      const { data } = await axios.put(
+        `${process.env.REACT_APP_API_URL}/api/v1/client/update/dates/${jobId}`,
+        type === "yearEnd"
+          ? { yearEnd: date }
+          : type === "jobDeadline"
+          ? { jobDeadline: date }
+          : { currentDate: date }
+      );
+      if (data) {
+        toast.success("Date updated successfully!");
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error(error?.response?.data?.message);
+    }
+  };
+  //  --------------Table Columns Data--------->
   const columns = useMemo(
     () => [
       {
@@ -328,11 +438,63 @@ export default function AllJobs() {
         filterFn: "equals",
         size: 50,
       },
+      // End  year
       {
         accessorKey: "job.yearEnd",
         header: "Year End",
-        Cell: ({ cell }) => format(new Date(cell.getValue()), "dd-MMM-yyyy"),
-        filterFn: "equals",
+        Cell: ({ cell, row }) => {
+          const [date, setDate] = useState(
+            format(new Date(cell.getValue()), "yyyy-MM-dd")
+          );
+
+          const handleDateChange = (newDate) => {
+            setDate(newDate);
+            handleUpdateDates(row.original._id, newDate, "yearEnd");
+          };
+
+          return (
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              onBlur={(e) => handleDateChange(e.target.value)}
+              className="h-[2rem] w-[6.5rem] cursor-pointer rounded-md border border-gray-200 outline-none"
+            />
+          );
+        },
+        filterFn: (row, columnId, filterValue) => {
+          const cellValue = row.getValue(columnId);
+          if (!cellValue) return false;
+
+          const cellDate = new Date(cellValue);
+          const today = new Date();
+
+          switch (filterValue) {
+            case "Expired":
+              return cellDate < today;
+            case "Today":
+              return cellDate.toDateString() === today.toDateString();
+            case "Tomorrow":
+              const tomorrow = new Date(today);
+              tomorrow.setDate(today.getDate() + 1);
+              return cellDate.toDateString() === tomorrow.toDateString();
+            case "In 7 days":
+              const in7Days = new Date(today);
+              in7Days.setDate(today.getDate() + 7);
+              return cellDate <= in7Days && cellDate > today;
+            case "In 15 days":
+              const in15Days = new Date(today);
+              in15Days.setDate(today.getDate() + 15);
+              return cellDate <= in15Days && cellDate > today;
+            case "Month Wise":
+              return (
+                cellDate.getFullYear() === today.getFullYear() &&
+                cellDate.getMonth() === today.getMonth()
+              );
+            default:
+              return false;
+          }
+        },
         filterSelectOptions: [
           "Expired",
           "Today",
@@ -344,11 +506,64 @@ export default function AllJobs() {
         filterVariant: "select",
         size: 50,
       },
+      // Job DeadLine
       {
         accessorKey: "job.jobDeadline",
         header: "Deadline",
-        Cell: ({ cell }) => format(new Date(cell.getValue()), "dd-MMM-yyyy"),
-        filterFn: "equals",
+        Cell: ({ cell, row }) => {
+          const [date, setDate] = useState(
+            format(new Date(cell.getValue()), "yyyy-MM-dd")
+          );
+
+          const handleDateChange = (newDate) => {
+            setDate(newDate);
+            handleUpdateDates(row.original._id, newDate, "jobDeadline");
+          };
+
+          return (
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              onBlur={(e) => handleDateChange(e.target.value)}
+              className=" h-[2rem] w-[6.5rem]
+               cursor-pointer rounded-md border border-gray-200  outline-none"
+            />
+          );
+        },
+        filterFn: (row, columnId, filterValue) => {
+          const cellValue = row.getValue(columnId);
+          if (!cellValue) return false;
+
+          const cellDate = new Date(cellValue);
+          const today = new Date();
+
+          switch (filterValue) {
+            case "Expired":
+              return cellDate < today;
+            case "Today":
+              return cellDate.toDateString() === today.toDateString();
+            case "Tomorrow":
+              const tomorrow = new Date(today);
+              tomorrow.setDate(today.getDate() + 1);
+              return cellDate.toDateString() === tomorrow.toDateString();
+            case "In 7 days":
+              const in7Days = new Date(today);
+              in7Days.setDate(today.getDate() + 7);
+              return cellDate <= in7Days && cellDate > today;
+            case "In 15 days":
+              const in15Days = new Date(today);
+              in15Days.setDate(today.getDate() + 15);
+              return cellDate <= in15Days && cellDate > today;
+            case "Month Wise":
+              return (
+                cellDate.getFullYear() === today.getFullYear() &&
+                cellDate.getMonth() === today.getMonth()
+              );
+            default:
+              return false;
+          }
+        },
         filterSelectOptions: [
           "Expired",
           "Today",
@@ -360,11 +575,64 @@ export default function AllJobs() {
         filterVariant: "select",
         size: 50,
       },
+      //  Current Date
       {
         accessorKey: "currentDate",
         header: "Job Date",
-        Cell: ({ cell }) => format(new Date(cell.getValue()), "dd-MMM-yyyy"),
-        filterFn: "equals",
+        Cell: ({ cell, row }) => {
+          const [date, setDate] = useState(
+            format(new Date(cell.getValue()), "yyyy-MM-dd")
+          );
+
+          const handleDateChange = (newDate) => {
+            setDate(newDate);
+            handleUpdateDates(row.original._id, newDate, "currentDate");
+          };
+
+          return (
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              onBlur={(e) => handleDateChange(e.target.value)}
+              className=" h-[2rem] w-[6.5rem]
+               cursor-pointer rounded-md border border-gray-200  outline-none"
+            />
+          );
+        },
+        filterFn: (row, columnId, filterValue) => {
+          const cellValue = row.getValue(columnId);
+          if (!cellValue) return false;
+
+          const cellDate = new Date(cellValue);
+          const today = new Date();
+
+          switch (filterValue) {
+            case "Expired":
+              return cellDate < today;
+            case "Today":
+              return cellDate.toDateString() === today.toDateString();
+            case "Tomorrow":
+              const tomorrow = new Date(today);
+              tomorrow.setDate(today.getDate() + 1);
+              return cellDate.toDateString() === tomorrow.toDateString();
+            case "In 7 days":
+              const in7Days = new Date(today);
+              in7Days.setDate(today.getDate() + 7);
+              return cellDate <= in7Days && cellDate > today;
+            case "In 15 days":
+              const in15Days = new Date(today);
+              in15Days.setDate(today.getDate() + 15);
+              return cellDate <= in15Days && cellDate > today;
+            case "Month Wise":
+              return (
+                cellDate.getFullYear() === today.getFullYear() &&
+                cellDate.getMonth() === today.getMonth()
+              );
+            default:
+              return false;
+          }
+        },
         filterSelectOptions: [
           "Expired",
           "Today",
@@ -376,6 +644,7 @@ export default function AllJobs() {
         filterVariant: "select",
         size: 50,
       },
+      //  -----Due & Over Due Status----->
       {
         accessorKey: "status",
         header: "Status",
@@ -384,7 +653,20 @@ export default function AllJobs() {
             row.original.job.jobDeadline,
             row.original.job.yearEnd
           );
-          return status;
+
+          return (
+            <span
+              className={`text-white px-4  rounded-[2rem] ${
+                status === "Due"
+                  ? "bg-green-500  py-[6px] "
+                  : status === "Overdue"
+                  ? "bg-red-500  py-[7px] "
+                  : "bg-transparent"
+              }`}
+            >
+              {status}
+            </span>
+          );
         },
         filterFn: (row, id, filterValue) => {
           const status = getStatus(
@@ -398,6 +680,7 @@ export default function AllJobs() {
         filterVariant: "select",
         size: 50,
       },
+      //
       {
         accessorKey: "job.jobStatus",
         header: "Job Status",
@@ -484,7 +767,6 @@ export default function AllJobs() {
         header: "Time Tr.",
         Cell: ({ cell, row }) => {
           // const statusValue = cell.getValue();
-          console.log("Job_id:", row.original._id);
 
           return (
             <div
@@ -530,7 +812,7 @@ export default function AllJobs() {
       },
     ],
 
-    [users, play, auth]
+    [users, play, auth, note]
   );
 
   return (
@@ -559,57 +841,186 @@ export default function AllJobs() {
               <GoPlus className="h-5 w-5 text-white " /> Add Client
             </button>
           </div>
-          {/* Filters */}
-          <div className="flex items-center gap-2 mt-3">
-            {departments?.map((dep, i) => (
-              <div
-                className={`py-1 rounded-tl-md rounded-tr-md px-1 cursor-pointer font-[500] text-[14px] ${
-                  active === dep &&
-                  " border-2 border-b-0 text-orange-600 border-gray-300"
-                }`}
-                key={i}
-                onClick={() => {
-                  setActive(dep);
-                  filterByDep(dep);
-                }}
-              >
-                {dep} ({getDepartmentCount(dep)})
-              </div>
-            ))}
+          {/*  */}
+
+          {/* -----------Filters By Deparment--------- */}
+          <div className="flex items-center flex-wrap gap-2 mt-3">
+            {departments?.map((dep, i) => {
+              getDueAndOverdueCountByDepartment(dep);
+              return (
+                <div
+                  className={`py-1 rounded-tl-md rounded-tr-md px-1 cursor-pointer font-[500] text-[14px] ${
+                    active === dep &&
+                    " border-2 border-b-0 text-orange-600 border-gray-300"
+                  }`}
+                  key={i}
+                  onClick={() => {
+                    setActive(dep);
+                    filterByDep(dep);
+                    setActive1("");
+                  }}
+                >
+                  {dep} ({getDepartmentCount(dep)})
+                </div>
+              );
+            })}
+            {/*  */}
+            {/* -------------Filter Open Buttons-------- */}
             <span
               className={` p-1 rounded-md hover:shadow-md bg-gray-50 mb-1  cursor-pointer border  ${
-                activeBtn === "jobHolder" &&
-                showJobHolder &&
-                "bg-orange-600 text-white"
+                activeBtn === "jobHolder" && "bg-orange-500 text-white"
               }`}
               onClick={() => {
                 setActiveBtn("jobHolder");
                 setShowJobHolder(!showJobHolder);
               }}
+              title="Filter by Job Holder"
             >
               <IoBriefcaseOutline className="h-6 w-6  cursor-pointer " />
             </span>
             <span
               className={` p-1 rounded-md hover:shadow-md mb-1 bg-gray-50 cursor-pointer border ${
-                activeBtn === "due" && showDue && "bg-orange-600 text-white"
+                activeBtn === "due" && "bg-orange-500 text-white"
               }`}
               onClick={() => {
                 setActiveBtn("due");
                 setShowDue(!showDue);
               }}
+              title="Filter by Status"
             >
               <TbCalendarDue className="h-6 w-6  cursor-pointer" />
+            </span>
+            <span
+              className={` p-1 rounded-md hover:shadow-md mb-1 bg-gray-50 cursor-pointer border ${
+                activeBtn === "status" && "bg-orange-500 text-white"
+              }`}
+              onClick={() => {
+                setActiveBtn("status");
+                setShowStatus(!showStatus);
+              }}
+              title="Filter by Job Status"
+            >
+              <GrStatusUnknown className="h-6 w-6  cursor-pointer" />
+            </span>
+            <span
+              className={` p-1 rounded-md hover:shadow-md mb-1 bg-gray-50 cursor-pointer border `}
+              onClick={() => {
+                setActive("All");
+                setActiveBtn("");
+                setShowStatus(false);
+                setShowJobHolder(false);
+                setShowDue(false);
+                setActive1("");
+              }}
+              title="Clear filters"
+            >
+              <IoClose className="h-6 w-6  cursor-pointer" />
             </span>
           </div>
           {/*  */}
           <hr className="mb-1 bg-gray-300 w-full h-[1px]" />
-          {/* ---------------------Table---------------- */}
+
+          {/* ----------Job_Holder Summery Filters---------- */}
+          {showJobHolder && activeBtn === "jobHolder" && (
+            <>
+              <div className="w-full  py-2 ">
+                <h3 className="text-[19px] font-semibold text-black">
+                  Job Holder Summary
+                </h3>
+                <div className="flex items-center flex-wrap gap-4">
+                  {users?.map((user, i) => (
+                    <div
+                      className={`py-1 rounded-tl-md rounded-tr-md px-1 cursor-pointer font-[500] text-[14px] ${
+                        active1 === user &&
+                        "  border-b-2 text-orange-600 border-orange-600"
+                      }`}
+                      key={i}
+                      onClick={() => {
+                        setActive1(user);
+                        filterByDepStat(user, active);
+                      }}
+                    >
+                      {user} ({getJobHolderCount(user, active)})
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <hr className="mb-1 bg-gray-300 w-full h-[1px]" />
+            </>
+          )}
+
+          {/* ----------Date Status Summery Filters---------- */}
+          {showDue && activeBtn === "due" && (
+            <>
+              <div className="w-full py-2">
+                <h3 className="text-[19px] font-semibold text-black">
+                  Date Status Summary
+                </h3>
+                <div className="flex items-center flex-wrap gap-4">
+                  {dateStatus?.map((stat, i) => {
+                    const { due, overdue } =
+                      getDueAndOverdueCountByDepartment(active);
+                    return (
+                      <div
+                        className={`py-1 rounded-tl-md rounded-tr-md px-1 cursor-pointer font-[500] text-[14px] ${
+                          active1 === stat &&
+                          " border-b-2 text-orange-600 border-orange-600"
+                        }`}
+                        key={i}
+                        onClick={() => {
+                          setActive1(stat);
+                          filterByDepStat(stat, active);
+                        }}
+                      >
+                        {stat === "Due" ? (
+                          <span>Due {due}</span>
+                        ) : (
+                          <span>Overdue {overdue}</span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+              <hr className="mb-1 bg-gray-300 w-full h-[1px]" />
+            </>
+          )}
+
+          {/* ----------Status Summery Filters---------- */}
+          {showStatus && activeBtn === "status" && (
+            <>
+              <div className="w-full  py-2 ">
+                <h3 className="text-[19px] font-semibold text-black">
+                  Status Summary
+                </h3>
+                <div className="flex items-center flex-wrap gap-4">
+                  {status?.map((stat, i) => (
+                    <div
+                      className={`py-1 rounded-tl-md rounded-tr-md px-1 cursor-pointer font-[500] text-[14px] ${
+                        active1 === stat &&
+                        "  border-b-2 text-orange-600 border-orange-600"
+                      }`}
+                      key={i}
+                      onClick={() => {
+                        setActive1(stat);
+                        filterByDepStat(stat, active);
+                      }}
+                    >
+                      {stat} ({getStatusCount(stat, active)})
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <hr className="mb-1 bg-gray-300 w-full h-[1px]" />
+            </>
+          )}
+
+          {/* ---------------------Data Table---------------- */}
           <div className="w-full h-screen  relative">
-            {/* overflow-y-scroll  */}
             <div className="h-screen hidden1 overflow-y-scroll   relative ">
               <MaterialReactTable
                 columns={columns}
-                data={active === "All" ? tableData : filterData}
+                data={active === "All" && !active1 ? tableData : filterData}
                 enableRowSelection
                 getRowId={(originalRow) => originalRow.id}
                 enableColumnActions={false}
@@ -639,10 +1050,7 @@ export default function AllJobs() {
                 muiTableProps={{
                   sx: {
                     "& .MuiTableHead-root": {
-                      position: "sticky",
-                      top: 0,
                       backgroundColor: "#f0f0f0",
-                      zIndex: 1,
                     },
                     tableLayout: "auto",
                     fontSize: "14px",
@@ -653,7 +1061,7 @@ export default function AllJobs() {
           </div>
         </div>
       )}
-      {/* Add Modal */}
+      {/* ------------Add Client_Job Modal -------------*/}
       {isOpen && (
         <div className="fixed top-0 left-0 w-full h-screen z-[999] bg-gray-100 flex items-center justify-center py-6  px-4">
           <span
@@ -669,7 +1077,7 @@ export default function AllJobs() {
         </div>
       )}
 
-      {/* Job Details */}
+      {/*---------------Job Details---------------*/}
 
       {showDetail && (
         <div className="fixed right-0 top-[3.8rem] z-[999] bg-gray-100 w-[35%] h-[calc(100vh-3.8rem)] py-3 px-3 ">
@@ -690,7 +1098,7 @@ export default function AllJobs() {
           />
         </div>
       )}
-      {/* Comment Modal  */}
+      {/* ------------Comment Modal---------*/}
 
       {isComment && (
         <div className="fixed top-0 left-0 w-full h-screen z-[999] bg-black/60 flex items-center justify-center">
@@ -702,7 +1110,7 @@ export default function AllJobs() {
         </div>
       )}
 
-      {/* Stop Timer */}
+      {/* -------------Stop Timer Btn-----------*/}
       {isShow && (
         <div className="fixed top-0 left-0 z-[999] w-full h-full bg-gray-300/80 flex items-center justify-center">
           <div className="w-[32rem] rounded-md bg-white shadow-md">

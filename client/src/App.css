@@ -44,6 +44,12 @@
   padding: 8px 12px;
 }
 
+/* Remove date Icon */
+/* input[type="date"]::-webkit-calendar-picker-indicator {
+  display: none;
+  -webkit-appearance: none;
+} */
+
 /*  Material Tables */
 /* .css-1bneajg.Mui-active {
   display: none !important;

@@ -6,6 +6,7 @@ import {
   getClientWithJobs,
   singleClientJob,
   updateClientJob,
+  updateDates,
   updateJobHolder,
   updateLead,
   updateStatus,
@@ -40,5 +41,8 @@ router.get("/jobs", getClientWithJobs);
 
 // Update Client Job
 router.put("/update/job", requiredSignIn, updateClientJob);
+
+// Update Dates
+router.put("/update/dates/:id", requiredSignIn, updateDates);
 
 export default router;

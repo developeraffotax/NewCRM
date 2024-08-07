@@ -177,3 +177,35 @@
     },
     rowVirtualizerOptions: { overscan: 4 },
   });
+
+
+  //filter
+    // const filterByDep = (value) => {
+  //   let filteredData = [];
+
+  //   if (
+  //     activeBtn === "due" ||
+  //     activeBtn === "status" ||
+  //     activeBtn === "jobHolder"
+  //   ) {
+  //     filteredData = tableData.filter(
+  //       (item) =>
+  //         (activeBtn === "due" &&
+  //           getStatus(item.job.jobDeadline, item.job.yearEnd) === "Due") ||
+  //         (activeBtn === "overdue" &&
+  //           getStatus(item.job.jobDeadline, item.job.yearEnd) === "Overdue") ||
+  //         item.job.jobName === value ||
+  //         item.job.jobStatus === value ||
+  //         item.job.jobHolder === value
+  //     );
+  //   } else {
+  //     filteredData = tableData.filter(
+  //       (item) =>
+  //         item.job.jobName === value ||
+  //         item.job.jobStatus === value ||
+  //         item.job.jobHolder === value
+  //     );
+  //   }
+
+  //   setFilterData([...filteredData]);
+  // };

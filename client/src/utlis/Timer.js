@@ -3,6 +3,7 @@ import React, {
   useEffect,
   useImperativeHandle,
   forwardRef,
+  useRef,
 } from "react";
 import axios from "axios";
 import { FaCirclePlay } from "react-icons/fa6";
@@ -16,10 +17,10 @@ export const Timer = forwardRef(({ clientId, jobId, setIsShow, note }, ref) => {
   const [startTime, setStartTime] = useState(null);
   const [totalTime, setTotalTime] = useState(null);
   const { anyTimerRunning, setAnyTimerRunning } = useAuth();
+  const isInitialMount = useRef(true);
 
   useEffect(() => {
     const fetchTimerStatus = async () => {
-      console.log(jobId);
       try {
         const response = await axios.get(
           `${process.env.REACT_APP_API_URL}/api/v1/timer/status`,
@@ -44,7 +45,11 @@ export const Timer = forwardRef(({ clientId, jobId, setIsShow, note }, ref) => {
       }
     };
 
-    fetchTimerStatus();
+    // fetchTimerStatus();
+    if (isInitialMount.current) {
+      fetchTimerStatus();
+      isInitialMount.current = false;
+    }
   }, [clientId, jobId, setAnyTimerRunning]);
 
   useEffect(() => {

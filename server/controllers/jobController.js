@@ -381,10 +381,8 @@ export const updateClientJob = async (req, res) => {
       });
     }
 
-    // Iterate over each job and either update or create
     for (const jobData of jobs) {
       if (jobData.clientId) {
-        // If clientId exists, update the job
         await jobsModel.findByIdAndUpdate(
           jobData.clientId,
           {
@@ -410,7 +408,6 @@ export const updateClientJob = async (req, res) => {
           { new: true }
         );
       } else {
-        // If clientId does not exist, create a new job entry
         await jobsModel.create({
           clientName,
           regNumber,
@@ -533,6 +530,58 @@ export const commentReply = async (req, res) => {
     res.status(500).send({
       success: false,
       message: "Error in job comment reply!",
+      error: error,
+    });
+  }
+};
+
+// Update Jobs Year_end Date
+export const updateDates = async (req, res) => {
+  try {
+    const jobId = req.params.id;
+    const { yearEnd, jobDeadline, currentDate } = req.body;
+
+    if (!jobId) {
+      return res.status(400).send({
+        success: false,
+        message: "Job id is required!",
+      });
+    }
+
+    let clientJob;
+
+    if (yearEnd) {
+      clientJob = await jobsModel.findByIdAndUpdate(
+        { _id: jobId },
+        { $set: { "job.yearEnd": yearEnd } },
+        { new: true }
+      );
+    }
+    if (jobDeadline) {
+      clientJob = await jobsModel.findByIdAndUpdate(
+        { _id: jobId },
+        { $set: { "job.jobDeadline": jobDeadline } },
+        { new: true }
+      );
+    }
+    if (currentDate) {
+      clientJob = await jobsModel.findByIdAndUpdate(
+        { _id: jobId },
+        { $set: { currentDate: currentDate } },
+        { new: true }
+      );
+    }
+
+    res.status(200).send({
+      success: true,
+      message: "Date updated successfully!",
+      clientJob: clientJob,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      success: false,
+      message: "Error in Yearend date !",
       error: error,
     });
   }
