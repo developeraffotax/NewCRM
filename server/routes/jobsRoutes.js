@@ -4,6 +4,7 @@ import {
   deleteClientJob,
   getAllClients,
   getClientWithJobs,
+  singleClientComments,
   singleClientJob,
   updateClientJob,
   updateDates,
@@ -44,5 +45,8 @@ router.put("/update/job", requiredSignIn, updateClientJob);
 
 // Update Dates
 router.put("/update/dates/:id", requiredSignIn, updateDates);
+
+// Get Comments
+router.get("/job/comments/:id", singleClientComments);
 
 export default router;

@@ -209,3 +209,49 @@
 
   //   setFilterData([...filteredData]);
   // };
+
+
+  --------------------------Table Data---------->
+   const table = useMaterialReactTable({
+    columns,
+    data: active === "All" && !active1 ? tableData : filterData,
+    getRowId: (originalRow) => originalRow.id,
+    enableStickyHeader: true,
+    enableStickyFooter: true,
+    muiTableContainerProps: { sx: { maxHeight: "700px" } },
+    enableColumnActions: false,
+    enableColumnFilters: true,
+    enableSorting: true,
+    enableGlobalFilter: true,
+    enableRowNumbers: true,
+    state: { isLoading: loading },
+    enablePagination: true,
+    initialState: {
+      pagination: { pageSize: 25, pageIndex: 2 },
+      density: "compact",
+    },
+    sx: {
+      minWidth: 650,
+      flex: 1,
+      display: "flex",
+      flexDirection: "column",
+      height: "94vh",
+    },
+    muiTableHeadCellProps: {
+      style: {
+        fontWeight: "bold",
+        fontSize: "14px",
+        backgroundColor: "#f0f0f0",
+        color: "#000",
+      },
+    },
+    muiTableProps: {
+      sx: {
+        "& .MuiTableHead-root": {
+          backgroundColor: "#f0f0f0",
+        },
+        tableLayout: "auto",
+        fontSize: "14px",
+      },
+    },
+  });

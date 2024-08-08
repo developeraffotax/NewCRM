@@ -6,7 +6,10 @@ export default function Dashboard() {
   const { auth } = useAuth();
   return (
     <Layout title="CRM_Dashboard">
-      <div>Dashboard</div>
+      <div>
+        Dashboard
+        <pre>{JSON.stringify(auth, 0, 4)}</pre>
+      </div>
     </Layout>
   );
 }

@@ -110,9 +110,13 @@ export const loginUser = async (req, res) => {
       });
     }
 
-    const token = await jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "29d",
-    });
+    const token = await jwt.sign(
+      { id: user._id, user: user },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "29d",
+      }
+    );
 
     res.status(200).send({
       success: true,

@@ -7,6 +7,7 @@ import { connectDB } from "./config/db.js";
 import userRoute from "./routes/userRoutes.js";
 import jobRoute from "./routes/jobsRoutes.js";
 import timerRoute from "./routes/timerRoutes.js";
+import commentRoute from "./routes/commentRoutes.js";
 
 // Dotenv COnfig
 dotenv.config();
@@ -24,6 +25,7 @@ app.use(morgan("dev"));
 app.use("/api/v1/user", userRoute);
 app.use("/api/v1/client", jobRoute);
 app.use("/api/v1/timer", timerRoute);
+app.use("/api/v1/comments", commentRoute);
 
 // Rest API's
 app.use("/", (req, res) => {

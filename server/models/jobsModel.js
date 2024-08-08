@@ -47,6 +47,12 @@ const commentsSchema = new mongoose.Schema(
     user: Object,
     comment: String,
     commentReplies: [Object],
+    likes: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
   },
   { timestamps: true }
 );

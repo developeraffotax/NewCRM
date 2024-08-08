@@ -9,7 +9,10 @@ import "ag-grid-community/styles/ag-theme-alpine.css";
 import { IoIosArrowDropdown } from "react-icons/io";
 import { IoIosArrowDropup } from "react-icons/io";
 import axios from "axios";
-import { MaterialReactTable } from "material-react-table";
+import {
+  MaterialReactTable,
+  useMaterialReactTable,
+} from "material-react-table";
 import { format } from "date-fns";
 import { MdInsertComment } from "react-icons/md";
 import toast from "react-hot-toast";
@@ -366,7 +369,9 @@ export default function AllJobs() {
       {
         accessorKey: "companyName",
         header: "Company Name",
-        size: 10,
+        minSize: 40,
+        maxSize: 80,
+        size: 40,
         Cell: ({ cell, row }) => {
           const companyName = cell.getValue();
 
@@ -386,7 +391,9 @@ export default function AllJobs() {
       {
         accessorKey: "clientName",
         header: "Client Name",
-        size: 50,
+        minSize: 30,
+        maxSize: 50,
+        size: 40,
       },
       {
         accessorKey: "job.jobHolder",
@@ -400,7 +407,7 @@ export default function AllJobs() {
               onChange={(e) =>
                 handleUpdateJobHolder(row.original._id, e.target.value)
               }
-              className="w-[6rem] h-[2rem] rounded-md border-2 border-orange-500 outline-none"
+              className="w-[6rem] h-[2rem] rounded-md border border-orange-300 outline-none"
             >
               <option value="">Select</option>
               {users.map((jobHold, i) => (
@@ -414,7 +421,9 @@ export default function AllJobs() {
         filterFn: "equals",
         filterSelectOptions: users.map((jobhold) => jobhold),
         filterVariant: "select",
-        size: 50,
+        minSize: 30,
+        maxSize: 50,
+        size: 40,
       },
       {
         accessorKey: "job.jobName",
@@ -788,10 +797,10 @@ export default function AllJobs() {
         size: 50,
       },
       {
-        accessorKey: "comment",
+        accessorKey: "comments",
         header: "Comments",
         Cell: ({ cell, row }) => {
-          // const statusValue = cell.getValue();
+          const comments = cell.getValue();
 
           return (
             <div
@@ -804,7 +813,7 @@ export default function AllJobs() {
               <span className="text-[1rem] cursor-pointer">
                 <MdInsertComment className="h-5 w-5 text-orange-600 " />
               </span>
-              <span>({"03"})</span>
+              <span>({comments?.length})</span>
             </div>
           );
         },
@@ -814,6 +823,47 @@ export default function AllJobs() {
 
     [users, play, auth, note]
   );
+
+  const table = useMaterialReactTable({
+    columns,
+    data: active === "All" && !active1 ? tableData : filterData,
+    getRowId: (originalRow) => originalRow.id,
+    enableRowSelection: true,
+    enableStickyHeader: true,
+    enableStickyFooter: true,
+    columnFilterDisplayMode: "popover",
+    muiTableContainerProps: { sx: { maxHeight: "700px" } },
+    enableColumnActions: false,
+    enableColumnFilters: true,
+    enableSorting: true,
+    enableGlobalFilter: true,
+    enableRowNumbers: true,
+    // state: { isLoading: loading },
+    enablePagination: true,
+    initialState: {
+      pagination: { pageSize: 20 },
+      pageSize: 20,
+      density: "compact",
+    },
+
+    muiTableHeadCellProps: {
+      style: {
+        fontWeight: "bold",
+        fontSize: "17px",
+        backgroundColor: "#f0f0f0",
+        color: "#000",
+      },
+    },
+    muiTableProps: {
+      sx: {
+        "& .MuiTableHead-root": {
+          backgroundColor: "#f0f0f0",
+        },
+        tableLayout: "auto",
+        fontSize: "14px",
+      },
+    },
+  });
 
   return (
     <Layout>
@@ -1018,45 +1068,7 @@ export default function AllJobs() {
           {/* ---------------------Data Table---------------- */}
           <div className="w-full h-screen  relative">
             <div className="h-screen hidden1 overflow-y-scroll   relative ">
-              <MaterialReactTable
-                columns={columns}
-                data={active === "All" && !active1 ? tableData : filterData}
-                enableRowSelection
-                getRowId={(originalRow) => originalRow.id}
-                enableColumnActions={false}
-                enableColumnFilters={true}
-                enableSorting={true}
-                enableGlobalFilter={true}
-                enableRowNumbers={true}
-                state={{ isLoading: loading }}
-                enablePagination={true}
-                density="compact"
-                size="small"
-                height="94vh"
-                sx={{
-                  minWidth: 650,
-                  flex: 1,
-                  display: "flex",
-                  flexDirection: "column",
-                }}
-                muiTableHeadCellProps={{
-                  style: {
-                    fontWeight: "bold",
-                    fontSize: "14px",
-                    backgroundColor: "#f0f0f0",
-                    color: "#000",
-                  },
-                }}
-                muiTableProps={{
-                  sx: {
-                    "& .MuiTableHead-root": {
-                      backgroundColor: "#f0f0f0",
-                    },
-                    tableLayout: "auto",
-                    fontSize: "14px",
-                  },
-                }}
-              />
+              <MaterialReactTable table={table} />
             </div>
           </div>
         </div>
@@ -1101,12 +1113,12 @@ export default function AllJobs() {
       {/* ------------Comment Modal---------*/}
 
       {isComment && (
-        <div className="fixed top-0 left-0 w-full h-screen z-[999] bg-black/60 flex items-center justify-center">
-          {/* <JobCommentModal
+        <div className="fixed bottom-4 right-4 w-[30rem] max-h-screen z-[999]  flex items-center justify-center">
+          <JobCommentModal
             setIsComment={setIsComment}
             jobId={jobId}
             setJobId={setJobId}
-          /> */}
+          />
         </div>
       )}
 

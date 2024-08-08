@@ -445,96 +445,6 @@ export const updateClientJob = async (req, res) => {
   }
 };
 
-// Create Comment
-
-export const createComment = async (req, res) => {
-  try {
-    const { comment, jobId } = req.body;
-
-    const job = await jobsModel.findById(jobId);
-    if (!job) {
-      return res.status(400).send({
-        success: false,
-        message: "Job not found!",
-      });
-    }
-
-    const newComment = {
-      user: req.user,
-      comment: comment,
-      commentReplies: [],
-    };
-
-    job.comments.push(newComment);
-
-    // Create Notification
-
-    await job.save();
-
-    res.status(200).send({
-      success: true,
-      message: "Comment Posted!",
-      job: job,
-    });
-  } catch (error) {
-    console.log(error);
-    res.status(500).send({
-      success: false,
-      message: "Error in job comments!",
-      error: error,
-    });
-  }
-};
-
-// Add Comment Reply
-export const commentReply = async (req, res) => {
-  try {
-    const { commentReply, jobId, commentId } = req.body;
-
-    const job = await jobsModel.findById(jobId);
-    if (!job) {
-      return res.status(400).send({
-        success: false,
-        message: "Job not found!",
-      });
-    }
-    const comment = job.comments.find((item) => item._id.equals(commentId));
-    if (!comment) {
-      return res.status(400).send({
-        success: false,
-        message: "Invalid comment id!",
-      });
-    }
-
-    // Replay
-    const newReply = {
-      user: req.user,
-      reply: commentReply,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
-    comment.commentReplies.push(newReply);
-
-    await job.save();
-
-    // Create Notification
-
-    res.status(200).send({
-      success: true,
-      message: "Reply Posted!",
-      job: job,
-    });
-  } catch (error) {
-    console.log(error);
-    res.status(500).send({
-      success: false,
-      message: "Error in job comment reply!",
-      error: error,
-    });
-  }
-};
-
 // Update Jobs Year_end Date
 export const updateDates = async (req, res) => {
   try {
@@ -582,6 +492,36 @@ export const updateDates = async (req, res) => {
     res.status(500).send({
       success: false,
       message: "Error in Yearend date !",
+      error: error,
+    });
+  }
+};
+
+// Get Single Client Comments
+export const singleClientComments = async (req, res) => {
+  try {
+    const jobId = req.params.id;
+
+    if (!jobId) {
+      return res.status(400).send({
+        success: false,
+        message: "Job id is required!",
+      });
+    }
+
+    const clientComments = await jobsModel
+      .findById({ _id: jobId })
+      .select("comments");
+
+    res.status(200).send({
+      success: true,
+      comments: clientComments,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      success: false,
+      message: "Error in get single job!",
       error: error,
     });
   }
