@@ -420,7 +420,7 @@ export default function AllJobs() {
         filterFn: "equals",
         filterSelectOptions: users.map((jobhold) => jobhold),
         filterVariant: "select",
-        size: 110,
+        size: 130,
       },
       {
         accessorKey: "job.jobName",
@@ -797,7 +797,7 @@ export default function AllJobs() {
             </div>
           );
         },
-        size: 100,
+        size: 110,
       },
       {
         accessorKey: "comments",
@@ -820,7 +820,7 @@ export default function AllJobs() {
             </div>
           );
         },
-        size: 80,
+        size: 100,
       },
     ],
 
@@ -859,7 +859,7 @@ export default function AllJobs() {
         fontSize: "15px",
         backgroundColor: "#f0f0f0",
         color: "#000",
-        padding: ".7rem 0rem",
+        padding: ".7rem 0.3rem",
       },
     },
     muiTableBodyCellProps: {
