@@ -442,7 +442,7 @@ export default function AllJobs() {
         accessorKey: "totalHours",
         header: "Hours",
         filterFn: "equals",
-        size: 50,
+        size: 80,
       },
       // End  year
       {
@@ -685,7 +685,7 @@ export default function AllJobs() {
         },
         filterSelectOptions: ["Overdue", "Due"],
         filterVariant: "select",
-        size: 100,
+        size: 110,
       },
       //
       {
@@ -753,7 +753,7 @@ export default function AllJobs() {
         filterFn: "equals",
         filterSelectOptions: users.map((lead) => lead),
         filterVariant: "select",
-        size: 100,
+        size: 110,
       },
       {
         accessorKey: "totalTime",
@@ -767,7 +767,7 @@ export default function AllJobs() {
             </div>
           );
         },
-        size: 90,
+        size: 100,
       },
       {
         accessorKey: "timertracker",
@@ -820,7 +820,7 @@ export default function AllJobs() {
             </div>
           );
         },
-        size: 100,
+        size: 110,
       },
     ],
 
@@ -859,7 +859,7 @@ export default function AllJobs() {
         fontSize: "15px",
         backgroundColor: "#f0f0f0",
         color: "#000",
-        padding: ".7rem 0.3rem",
+        padding: ".7rem 0.4rem",
       },
     },
     muiTableBodyCellProps: {
