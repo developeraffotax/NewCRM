@@ -290,3 +290,15 @@ inputBox > textarea:focus ~ span {
   background-clip: text;
   text-fill-color: transparent;
 }
+
+.mentions {
+  outline: none;
+}
+
+.highlight {
+  background-color: #ffff99;
+  padding: 0 2px;
+  border-radius: 2px;
+  font-weight: 500;
+  color: #007bff;
+}

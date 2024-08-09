@@ -1,5 +1,6 @@
 import jobsModel from "../models/jobsModel.js";
 import timerModel from "../models/timerModel.js";
+import timerStatusModel from "../models/timerStatusModel.js";
 
 // Start Timer
 export const startTimer = async (req, res) => {
@@ -124,13 +125,13 @@ export const totalTime = async (req, res) => {
 
     let responseMessage;
     if (totalTimeInSeconds < 60) {
-      responseMessage = `${totalTimeInSeconds.toFixed(1)} sec`;
+      responseMessage = `${totalTimeInSeconds.toFixed(1)} s`;
     } else if (totalTimeInSeconds < 3600) {
       const totalTimeInMinutes = totalTimeInSeconds / 60;
-      responseMessage = `${totalTimeInMinutes.toFixed(1)} mints`;
+      responseMessage = `${totalTimeInMinutes.toFixed(1)} m`;
     } else {
       const totalTimeInHours = totalTimeInSeconds / 3600;
-      responseMessage = `${totalTimeInHours.toFixed(1)} hr`;
+      responseMessage = `${totalTimeInHours.toFixed(1)} h`;
     }
     // Update Time in Job
     const job = await jobsModel.findById(jobId);
@@ -157,6 +158,101 @@ export const totalTime = async (req, res) => {
     res.status(500).send({
       success: false,
       message: "Error in total time controller",
+      error,
+    });
+  }
+};
+
+// Add Timer Status
+export const addTimerStatus = async (req, res) => {
+  try {
+    const { userId, taskName, pageName, taskLink } = req.body;
+    if (!userId || !taskName || !pageName || !taskLink) {
+      return res.status(400).send({
+        success: false,
+        message: "All fields required!",
+      });
+    }
+
+    const isExisting = await timerStatusModel.findOne({ userId: userId });
+    if (isExisting) {
+      return res.status(400).send({
+        success: false,
+        message: "Timer task is already exist!",
+      });
+    }
+
+    const timerStatus = await timerStatusModel.create({
+      userId,
+      taskName,
+      pageName,
+      taskLink,
+    });
+
+    res.status(200).send({
+      success: true,
+      message: "Timer task status added!",
+      timerStatus: timerStatus,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      success: false,
+      message: "Error in timer status controller",
+      error,
+    });
+  }
+};
+
+// Remove timer Status
+export const removeTimerStatus = async (req, res) => {
+  try {
+    const userId = req.params.id;
+    if (!userId) {
+      return res.status(400).send({
+        success: false,
+        message: "User id is required!",
+      });
+    }
+
+    await timerStatusModel.findOneAndDelete({ userId: userId });
+
+    res.status(200).send({
+      success: true,
+      message: "Timer status task removed!",
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      success: false,
+      message: "Error in timer status controller",
+      error,
+    });
+  }
+};
+
+// Get Task Timer Status
+export const getTimerStatus = async (req, res) => {
+  try {
+    const userId = req.params.id;
+    if (!userId) {
+      return res.status(400).send({
+        success: false,
+        message: "User id is required!",
+      });
+    }
+    const timerStatus = await timerStatusModel.findOne({ userId: userId });
+
+    res.status(200).send({
+      success: true,
+      message: "Timer status task!",
+      timerStatus: timerStatus,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      success: false,
+      message: "Error in timer status controller",
       error,
     });
   }

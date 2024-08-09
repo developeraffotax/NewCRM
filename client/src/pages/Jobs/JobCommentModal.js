@@ -13,8 +13,14 @@ import { BsEmojiSmile } from "react-icons/bs";
 import { format } from "date-fns";
 import { AiFillLike, AiOutlineLike } from "react-icons/ai";
 import Loader from "../../utlis/Loader";
+import { MentionsInput, Mention } from "react-mentions";
 
-export default function JobCommentModal({ setIsComment, jobId, setJobId }) {
+export default function JobCommentModal({
+  setIsComment,
+  jobId,
+  setJobId,
+  users,
+}) {
   const { auth } = useAuth();
   const [loading, setLoading] = useState(false);
   const [comment, setComment] = useState("");
@@ -28,7 +34,45 @@ export default function JobCommentModal({ setIsComment, jobId, setJobId }) {
   const [showReplyEmoji, setShowReplyEmoji] = useState(false);
   const [commentLikes, setCommentLikes] = useState([]);
   const [likeCounts, setLikeCounts] = useState({});
-  console.log("commentLikes:", commentLikes);
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [mentionStart, setMentionStart] = useState(-1);
+
+  // -----------Mention User----->
+  const handleInputChange = (e) => {
+    const value = e.target.value;
+    setComment(value);
+
+    // Check for "@" mention trigger
+    const mentionIndex = value.lastIndexOf("@");
+
+    if (mentionIndex !== -1) {
+      const query = value.slice(mentionIndex + 1);
+
+      // Filter users based on the query after "@"
+      const filteredUsers = users.filter((user) =>
+        user.toLowerCase().startsWith(query.toLowerCase())
+      );
+
+      setSuggestions(filteredUsers);
+      setShowSuggestions(true);
+      setMentionStart(mentionIndex);
+    } else {
+      setShowSuggestions(false);
+    }
+  };
+
+  const handleMentionClick = (user) => {
+    const newText =
+      comment.slice(0, mentionStart) +
+      "@" +
+      user +
+      " " +
+      comment.slice(comment.length);
+
+    setComment(newText);
+    setShowSuggestions(false);
+  };
 
   // Add Emojis
   const onEmojiClick = (event) => {
@@ -225,7 +269,7 @@ export default function JobCommentModal({ setIsComment, jobId, setJobId }) {
         <hr className="w-full h-[1px] bg-gray-500" />
         {/* -----------------Display-Comments------------ */}
         <div
-          className="w-full max-h-[75%] bg-white overflow-y-auto py-3 px-3 flex flex-col gap-2"
+          className="w-full max-h-[75%] bg-white overflow-y-auto py-3 px-3 flex flex-col gap-3"
           id="message-container"
         >
           <>
@@ -238,7 +282,7 @@ export default function JobCommentModal({ setIsComment, jobId, setJobId }) {
                 {commentData &&
                   commentData?.map((comment, i) => (
                     <div
-                      className=" w-full flex flex-col gap-1 border border-gray-200 py-1 rounded-md "
+                      className=" w-full flex flex-col gap-1 border border-gray-400 py-1 rounded-md "
                       key={comment._id}
                     >
                       {/*  */}
@@ -264,12 +308,12 @@ export default function JobCommentModal({ setIsComment, jobId, setJobId }) {
                           )}
                         </span>
                       </div>
-                      <hr className="w-full h-[1px] bg-gray-500" />
+                      {/* <hr className="w-full h-[1px] bg-gray-300" /> */}
                       {/* M */}
                       <div className="w-full px-2 py-1 ">
                         {comment?.comment}
                       </div>
-                      <hr className="w-full h-[1px] bg-gray-500" />
+                      {/* <hr className="w-full h-[1px] bg-gray-300" /> */}
                       <div className="flex items-center justify-between px-4 ">
                         <span
                           className="flex items-center cursor-pointer"
@@ -414,14 +458,94 @@ export default function JobCommentModal({ setIsComment, jobId, setJobId }) {
               onSubmit={handleComment}
               className="w-full border border-orange-500 rounded-md px-2 py-1"
             >
-              <textarea
-                placeholder="Enter your comment here... 🙄"
-                onClick={() => setShowPicker(false)}
+              <div className="relative w-full">
+                <textarea
+                  placeholder="Enter your comment here... 🙄"
+                  value={comment}
+                  required
+                  onChange={handleInputChange}
+                  className="h-[3.3rem] w-full rounded-md outline-none resize-none py-1 px-2"
+                ></textarea>
+
+                {showSuggestions && (
+                  <ul className="absolute top-[-8rem] w-[8rem] bg-gray-50   rounded-md mt-1 shadow-md   max-h-40 overflow-y-auto z-10">
+                    {suggestions.map((user, index) => (
+                      <li
+                        key={index}
+                        onClick={() => handleMentionClick(user)}
+                        className="p-2 cursor-pointer hover:bg-gray-200 "
+                      >
+                        {user}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              {/* <MentionsInput
                 value={comment}
-                required
                 onChange={(e) => setComment(e.target.value)}
-                className="h-[3.3rem] w-full rounded-md  outline-none  resize-none py-1 px-2"
-              ></textarea>
+                className="mentions w-full h-[3.5rem] rounded-md border-none resize-none py-1 px-2"
+                placeholder="Enter your comment here... "
+                required
+                style={{
+                  control: {
+                    backgroundColor: "#fff",
+                    fontSize: 15,
+                    fontWeight: "normal",
+                  },
+                  "&multiLine": {
+                    control: {
+                      fontFamily: "monospace",
+                      border: "none",
+                    },
+                    highlighter: {
+                      padding: 9,
+                      border: "none",
+                    },
+                    input: {
+                      padding: 9,
+                      height: "100%",
+                      width: "100%",
+                      outline: 0,
+                      border: 0,
+                    },
+                  },
+                  suggestions: {
+                    list: {
+                      backgroundColor: "white",
+                      border: "none",
+                      fontSize: 14,
+                      boxShadow: "0px 0px 10px rgba(0,0,0,0.15)",
+                    },
+                    item: {
+                      padding: "5px 15px",
+                      borderBottom: "none",
+                      "&focused": {
+                        backgroundColor: "#cee4e5",
+                      },
+                    },
+                  },
+                }}
+              >
+                <Mention
+                  trigger="@"
+                  data={users.map((user, i) => ({
+                    id: i,
+                    display: user,
+                  }))}
+                  // appendSpaceOnAdd={true}
+                  className="mention"
+                  style={{
+                    backgroundColor: "#e8f4ff",
+                    color: "#1d9bf0",
+                    padding: "0 4px",
+                    borderRadius: "3px",
+                    fontWeight: "bold",
+                  }}
+                />
+              </MentionsInput> */}
+
               <div className="flex items-center justify-between  ">
                 <div className="relative " title="Add Emoji">
                   <span onClick={() => setShowPicker(!showPicker)}>

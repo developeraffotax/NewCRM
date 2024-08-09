@@ -18,14 +18,14 @@ import { MdInsertComment } from "react-icons/md";
 import toast from "react-hot-toast";
 import { useAuth } from "../../context/authContext";
 import Loader from "../../utlis/Loader";
-import { GrStatusUnknown } from "react-icons/gr";
-
 import { TbCalendarDue } from "react-icons/tb";
 import { IoClose } from "react-icons/io5";
 import JobDetail from "./JobDetail";
 import { IoBriefcaseOutline } from "react-icons/io5";
 import { Timer } from "../../utlis/Timer";
 import JobCommentModal from "./JobCommentModal";
+import { MdAutoGraph } from "react-icons/md";
+import { useLocation } from "react-router-dom";
 
 export default function AllJobs() {
   const { auth } = useAuth();
@@ -48,9 +48,12 @@ export default function AllJobs() {
   const [isShow, setIsShow] = useState(false);
   const [note, setNote] = useState("");
   const [active1, setActive1] = useState("");
-
   const timerRef = useRef();
   const [showStatus, setShowStatus] = useState(false);
+  const location = useLocation();
+
+  // Extract the current path
+  const currentPath = location.pathname;
 
   const departments = [
     "All",
@@ -369,9 +372,7 @@ export default function AllJobs() {
       {
         accessorKey: "companyName",
         header: "Company Name",
-        minSize: 40,
-        maxSize: 80,
-        size: 40,
+        size: 170,
         Cell: ({ cell, row }) => {
           const companyName = cell.getValue();
 
@@ -390,10 +391,8 @@ export default function AllJobs() {
       },
       {
         accessorKey: "clientName",
-        header: "Client Name",
-        minSize: 30,
-        maxSize: 50,
-        size: 40,
+        header: "Client",
+        size: 110,
       },
       {
         accessorKey: "job.jobHolder",
@@ -421,9 +420,7 @@ export default function AllJobs() {
         filterFn: "equals",
         filterSelectOptions: users.map((jobhold) => jobhold),
         filterVariant: "select",
-        minSize: 30,
-        maxSize: 50,
-        size: 40,
+        size: 110,
       },
       {
         accessorKey: "job.jobName",
@@ -439,7 +436,7 @@ export default function AllJobs() {
           "Address",
         ],
         filterVariant: "select",
-        size: 50,
+        size: 110,
       },
       {
         accessorKey: "totalHours",
@@ -451,6 +448,7 @@ export default function AllJobs() {
       {
         accessorKey: "job.yearEnd",
         header: "Year End",
+
         Cell: ({ cell, row }) => {
           const [date, setDate] = useState(
             format(new Date(cell.getValue()), "yyyy-MM-dd")
@@ -513,7 +511,7 @@ export default function AllJobs() {
           "Month Wise",
         ],
         filterVariant: "select",
-        size: 50,
+        size: 120,
       },
       // Job DeadLine
       {
@@ -582,7 +580,7 @@ export default function AllJobs() {
           "Month Wise",
         ],
         filterVariant: "select",
-        size: 50,
+        size: 120,
       },
       //  Current Date
       {
@@ -651,7 +649,7 @@ export default function AllJobs() {
           "Month Wise",
         ],
         filterVariant: "select",
-        size: 50,
+        size: 120,
       },
       //  -----Due & Over Due Status----->
       {
@@ -669,7 +667,7 @@ export default function AllJobs() {
                 status === "Due"
                   ? "bg-green-500  py-[6px] "
                   : status === "Overdue"
-                  ? "bg-red-500  py-[7px] "
+                  ? "bg-red-500  py-[6px] "
                   : "bg-transparent"
               }`}
             >
@@ -687,7 +685,7 @@ export default function AllJobs() {
         },
         filterSelectOptions: ["Overdue", "Due"],
         filterVariant: "select",
-        size: 50,
+        size: 100,
       },
       //
       {
@@ -702,7 +700,7 @@ export default function AllJobs() {
               onChange={(e) =>
                 handleStatusChange(row.original._id, e.target.value)
               }
-              className="w-[6rem] h-[2rem] rounded-md border-2 border-sky-500 outline-none"
+              className="w-[6rem] h-[2rem] rounded-md border border-sky-300 outline-none"
             >
               <option value="">Select</option>
               <option value="Data">Data</option>
@@ -727,7 +725,7 @@ export default function AllJobs() {
           "Feedback",
         ],
         filterVariant: "select",
-        size: 50,
+        size: 110,
       },
       {
         accessorKey: "job.lead",
@@ -755,7 +753,7 @@ export default function AllJobs() {
         filterFn: "equals",
         filterSelectOptions: users.map((lead) => lead),
         filterVariant: "select",
-        size: 50,
+        size: 100,
       },
       {
         accessorKey: "totalTime",
@@ -769,32 +767,37 @@ export default function AllJobs() {
             </div>
           );
         },
-        size: 30,
+        size: 90,
       },
       {
         accessorKey: "timertracker",
         header: "Time Tr.",
         Cell: ({ cell, row }) => {
           // const statusValue = cell.getValue();
+          // console.log("row", row.original.job.jobName);
 
           return (
             <div
-              className="flex items-center gap-1 w-full h-full "
+              className="flex items-center justify-center gap-1 w-full h-full "
               onClick={() => setPlay(!play)}
             >
-              <span className="text-[1rem] cursor-pointer">
+              <span className="text-[1rem] cursor-pointer  ">
                 <Timer
                   ref={timerRef}
                   clientId={auth.user.id}
                   jobId={row.original._id}
                   setIsShow={setIsShow}
                   note={note}
+                  taskLink={currentPath}
+                  pageName={"Jobs"}
+                  taskName={row.original.companyName}
+                  setNote={setNote}
                 />
               </span>
             </div>
           );
         },
-        size: 50,
+        size: 100,
       },
       {
         accessorKey: "comments",
@@ -804,7 +807,7 @@ export default function AllJobs() {
 
           return (
             <div
-              className="flex items-center gap-1 w-full h-full"
+              className="flex items-center justify-center gap-1 w-full h-full"
               onClick={() => {
                 setJobId(row.original._id);
                 setIsComment(true);
@@ -817,7 +820,7 @@ export default function AllJobs() {
             </div>
           );
         },
-        size: 10,
+        size: 80,
       },
     ],
 
@@ -828,17 +831,21 @@ export default function AllJobs() {
     columns,
     data: active === "All" && !active1 ? tableData : filterData,
     getRowId: (originalRow) => originalRow.id,
-    enableRowSelection: true,
+    // enableRowSelection: true,
     enableStickyHeader: true,
     enableStickyFooter: true,
     columnFilterDisplayMode: "popover",
-    muiTableContainerProps: { sx: { maxHeight: "700px" } },
+    muiTableContainerProps: { sx: { maxHeight: "650px" } },
     enableColumnActions: false,
     enableColumnFilters: true,
     enableSorting: true,
     enableGlobalFilter: true,
     enableRowNumbers: true,
+    enableColumnResizing: true,
+    enableTopToolbar: true,
+    enableBottomToolbar: true,
     // state: { isLoading: loading },
+
     enablePagination: true,
     initialState: {
       pagination: { pageSize: 20 },
@@ -848,10 +855,16 @@ export default function AllJobs() {
 
     muiTableHeadCellProps: {
       style: {
-        fontWeight: "bold",
-        fontSize: "17px",
+        fontWeight: "600",
+        fontSize: "15px",
         backgroundColor: "#f0f0f0",
         color: "#000",
+        padding: ".7rem 0rem",
+      },
+    },
+    muiTableBodyCellProps: {
+      sx: {
+        border: "1px solid rgba(203, 201, 201, 0.5)",
       },
     },
     muiTableProps: {
@@ -861,6 +874,10 @@ export default function AllJobs() {
         },
         tableLayout: "auto",
         fontSize: "14px",
+        border: "1px solid rgba(81, 81, 81, .5)",
+        caption: {
+          captionSide: "top",
+        },
       },
     },
   });
@@ -888,7 +905,7 @@ export default function AllJobs() {
               className={`${style.button1} text-[15px] `}
               onClick={() => setIsOpen(true)}
             >
-              <GoPlus className="h-5 w-5 text-white " /> Add Client
+              Add Client
             </button>
           </div>
           {/*  */}
@@ -950,7 +967,7 @@ export default function AllJobs() {
               }}
               title="Filter by Job Status"
             >
-              <GrStatusUnknown className="h-6 w-6  cursor-pointer" />
+              <MdAutoGraph className="h-6 w-6  cursor-pointer" />
             </span>
             <span
               className={` p-1 rounded-md hover:shadow-md mb-1 bg-gray-50 cursor-pointer border `}
@@ -1118,6 +1135,7 @@ export default function AllJobs() {
             setIsComment={setIsComment}
             jobId={jobId}
             setJobId={setJobId}
+            users={users}
           />
         </div>
       )}

@@ -2,12 +2,14 @@ import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { IoSearch } from "react-icons/io5";
 import { IoNotifications } from "react-icons/io5";
-import { FaStopwatch20 } from "react-icons/fa";
-import { MdEmail } from "react-icons/md";
+// import { MdEmail } from "react-icons/md";
 import { format } from "timeago.js";
 import { useAuth } from "../../context/authContext";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { IoIosTimer } from "react-icons/io";
+import { MdOutlineTimerOff } from "react-icons/md";
+import { FaStopwatch } from "react-icons/fa6";
 
 const stringToColor = (string) => {
   let hash = 0;
@@ -16,6 +18,21 @@ const stringToColor = (string) => {
   }
   const color = `#${(hash & 0x00ffffff).toString(16).padStart(6, "0")}`;
   return color;
+};
+
+const formatElapsedTime = (createdAt) => {
+  const now = new Date();
+  const createdTime = new Date(createdAt);
+  const diffInMinutes = Math.floor((now - createdTime) / (1000 * 60));
+
+  if (diffInMinutes < 1) {
+    return "0m";
+  } else if (diffInMinutes < 60) {
+    return `${diffInMinutes}m`;
+  } else {
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    return `${diffInHours}h`;
+  }
 };
 
 const notifications = [
@@ -44,13 +61,14 @@ const notifications = [
 
 export default function Header() {
   const [search, setSearch] = useState("");
-  const { auth, setAuth } = useAuth();
+  const { auth, setAuth, time } = useAuth();
   const [open, setOpen] = useState(false);
   const [show, setShow] = useState(false);
   const navigate = useNavigate();
   const [userInfo, setUserInfo] = useState([]);
-
-  console.log(userInfo);
+  const [timerStatus, setTimerStatus] = useState([]);
+  const [showTimerStatus, setShowTimerStatus] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleSearch = async () => {
     try {
@@ -92,6 +110,25 @@ export default function Header() {
     navigate("/");
   };
 
+  // -----------Get Timer_Task_Status------
+  const getTimerStatus = async () => {
+    setLoading(true);
+    try {
+      const { data } = await axios.get(
+        `${process.env.REACT_APP_API_URL}/api/v1/timer/get/timer_task/Status/${auth.user.id}`
+      );
+      setTimerStatus(data.timerStatus);
+      setLoading(false);
+    } catch (error) {
+      console.log(error);
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    getTimerStatus();
+  }, [auth.user]);
+
   return (
     <div className="w-full h-[3.8rem] bg-gray-200">
       <div className="w-full h-full flex items-center justify-between sm:px-4 px-6 py-2">
@@ -114,7 +151,83 @@ export default function Header() {
           </form>
         </div>
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            {/* --------Timer Status------ */}
+            <div className="relative">
+              <div className="flex items-center">
+                <div
+                  className="relative cursor-pointer m-2"
+                  onClick={() => {
+                    getTimerStatus();
+                    setShowTimerStatus(!showTimerStatus);
+                  }}
+                >
+                  <FaStopwatch
+                    className={`text-2xl container  ${
+                      timerStatus ? "text-red-500 animate-pulse" : "text-black "
+                    } `}
+                  />
+                  <span
+                    className={`absolute top-[.4rem] right-[3px] bg-black ${
+                      timerStatus ? "bg-red-500 animate-pulse" : "bg-black "
+                    } rounded-full w-[18px] h-[18px] text-[12px] text-white flex items-center justify-center `}
+                  >
+                    {timerStatus ? "1" : "0"}
+                  </span>
+                </div>
+                {timerStatus && !loading && (
+                  <span className="text-[12px] font-semibold translate-x-[-.4rem]">
+                    {formatElapsedTime(timerStatus?.createdAt)}
+                  </span>
+                )}
+              </div>
+
+              {showTimerStatus && (
+                <div className="w-[350px] min-h-[20vh] max-h-[60vh]  overflow-y-auto border border-gray-300  pb-2 shadow-xl  bg-gray-100 absolute z-[999] top-[2rem] right-[1.6rem] rounded">
+                  <h5 className="text-[20px] bg-orange-400 text-center font-medium flex items-center justify-center text-white  p-2 font-Poppins">
+                    <IoIosTimer
+                      className={`h-9 w-9 text-sky-500  ${
+                        timerStatus && "animate-spin"
+                      }`}
+                    />
+                    Timer Status
+                  </h5>
+                  <hr className="h-[1px] w-full bg-gray-400 my-2" />
+                  {timerStatus ? (
+                    <Link to={timerStatus.taskLink}>
+                      <div className="px-2">
+                        <div className="  bg-[#00000013] rounded-md  hover:bg-gray-300 font-Poppins border-b  border-b-[#fff]">
+                          <div className="w-full flex cursor-pointer items-center justify-between py-2 px-1">
+                            <div className="flex items-center gap-1">
+                              <b className=" font-semibold text-[16px]">
+                                {timerStatus?.pageName}:
+                              </b>
+                              <p className="py-[2px] px-5 rounded-[2rem] text-[14px] bg-sky-600 shadow-md text-white ">
+                                {timerStatus?.taskName}
+                              </p>
+                            </div>
+                            <p className="p-2 text-gray-600 text-[12px] ">
+                              {format(timerStatus?.createdAt)}
+                            </p>
+                          </div>
+                          {/* <div className="text-[20px] w-full text-orange-600 font-semibold text-center">
+                            {time}
+                          </div> */}
+                        </div>
+                      </div>
+                    </Link>
+                  ) : (
+                    <div className="flex items-center justify-center w-full h-[4rem] bg-gray-300">
+                      <span className=" flex items-center justify-center gap-1 font-medium">
+                        <MdOutlineTimerOff className="h-6 w-6 text-red-500" />{" "}
+                        Timer is not running!
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+            {/* --------Notifications------ */}
             <div className="relative">
               <div
                 className="relative cursor-pointer m-2"

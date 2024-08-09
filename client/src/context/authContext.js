@@ -11,6 +11,9 @@ const AuthProvider = ({ children }) => {
   const [token, setToken] = useState("");
   const [active, setActive] = useState("dashboard");
   const [anyTimerRunning, setAnyTimerRunning] = useState(false);
+  const [time, setTime] = useState("");
+
+  console.log("Timer:", time);
 
   // check token
   axios.defaults.headers.common["Authorization"] = auth?.token;
@@ -40,6 +43,9 @@ const AuthProvider = ({ children }) => {
         setActive,
         anyTimerRunning,
         setAnyTimerRunning,
+
+        time,
+        setTime,
       }}
     >
       {children}
