@@ -8,6 +8,9 @@ import userRoute from "./routes/userRoutes.js";
 import jobRoute from "./routes/jobsRoutes.js";
 import timerRoute from "./routes/timerRoutes.js";
 import commentRoute from "./routes/commentRoutes.js";
+import http from "http";
+import notificationRoute from "./routes/notificationRoutes.js";
+import { initSocketServer } from "./socketServer.js";
 
 // Dotenv COnfig
 dotenv.config();
@@ -21,11 +24,16 @@ app.use(express.json());
 app.use(cors());
 app.use(morgan("dev"));
 
+// Init Socket Server
+const server = http.createServer(app);
+initSocketServer(server);
+
 // API's
 app.use("/api/v1/user", userRoute);
 app.use("/api/v1/client", jobRoute);
 app.use("/api/v1/timer", timerRoute);
 app.use("/api/v1/comments", commentRoute);
+app.use("/api/v1/notification", notificationRoute);
 
 // Rest API's
 app.use("/", (req, res) => {
@@ -35,6 +43,6 @@ app.use("/", (req, res) => {
 // Listening
 const PORT = process.env.PORT || 8080;
 
-app.listen(PORT, "0.0.0.0", () => {
+server.listen(PORT, () => {
   console.log(`Server is running at PORT ${PORT}`.bgMagenta.white);
 });

@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import Layout from "../../components/Loyout/Layout";
-import { GoPlus } from "react-icons/go";
 import { style } from "../../utlis/CommonStyle";
 import NewJobModal from "../../components/Modals/NewJobModal";
 import { CgClose } from "react-icons/cg";
@@ -26,9 +25,12 @@ import { Timer } from "../../utlis/Timer";
 import JobCommentModal from "./JobCommentModal";
 import { MdAutoGraph } from "react-icons/md";
 import { useLocation } from "react-router-dom";
+import socketIO from "socket.io-client";
+const ENDPOINT = process.env.REACT_APP_SOCKET_ENDPOINT || "";
+const socketId = socketIO(ENDPOINT, { transports: ["websocket"] });
 
 export default function AllJobs() {
-  const { auth } = useAuth();
+  const { auth, filterId, setFilterId } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [show, setShow] = useState(false);
   const [active, setActive] = useState("All");
@@ -51,6 +53,7 @@ export default function AllJobs() {
   const timerRef = useRef();
   const [showStatus, setShowStatus] = useState(false);
   const location = useLocation();
+  console.log("FilterId:", filterId);
 
   // Extract the current path
   const currentPath = location.pathname;
@@ -134,15 +137,24 @@ export default function AllJobs() {
       (item) =>
         item.job.jobName === value ||
         item.job.jobStatus === value ||
-        item.job.jobHolder === value
+        item.job.jobHolder === value ||
+        item._id === value
     );
+
+    console.log("FilterData", filteredData);
 
     setFilterData([...filteredData]);
   };
 
+  useEffect(() => {
+    if (tableData && filterId) {
+      filterByDep(filterId);
+    }
+    // eslint-disable-next-line
+  }, [tableData, filterId]);
+
   // -------------- Filter Data By Department || Status || Placeholder ----------->
 
-  // Testing
   const filterByDepStat = (value, dep) => {
     let filteredData = [];
 
@@ -293,6 +305,15 @@ export default function AllJobs() {
           )
         );
         toast.success("Job holder updated!");
+        // Send Socket Notification
+        socketId.emit("notification", {
+          title: "New Job Assigned",
+          redirectLink: "/job-planning",
+          description: data?.notification?.description,
+          taskId: data?.notification?.taskId,
+          userId: data?.notification?.userId,
+          status: "unread",
+        });
       }
     } catch (error) {
       console.error("Error updating status", error);
@@ -393,6 +414,9 @@ export default function AllJobs() {
         accessorKey: "clientName",
         header: "Client",
         size: 110,
+        minSize: 80,
+        maxSize: 150,
+        grow: true,
       },
       {
         accessorKey: "job.jobHolder",
@@ -420,7 +444,10 @@ export default function AllJobs() {
         filterFn: "equals",
         filterSelectOptions: users.map((jobhold) => jobhold),
         filterVariant: "select",
-        size: 130,
+        size: 120,
+        minSize: 80,
+        maxSize: 140,
+        grow: true,
       },
       {
         accessorKey: "job.jobName",
@@ -437,12 +464,15 @@ export default function AllJobs() {
         ],
         filterVariant: "select",
         size: 110,
+        minSize: 80,
+        maxSize: 140,
+        grow: true,
       },
       {
         accessorKey: "totalHours",
         header: "Hours",
         filterFn: "equals",
-        size: 80,
+        size: 50,
       },
       // End  year
       {
@@ -451,7 +481,7 @@ export default function AllJobs() {
 
         Cell: ({ cell, row }) => {
           const [date, setDate] = useState(
-            format(new Date(cell.getValue()), "yyyy-MM-dd")
+            format(new Date(cell.getValue()), "dd-MMM-yyyy")
           );
 
           const handleDateChange = (newDate) => {
@@ -461,11 +491,11 @@ export default function AllJobs() {
 
           return (
             <input
-              type="date"
+              type="text"
               value={date}
               onChange={(e) => setDate(e.target.value)}
               onBlur={(e) => handleDateChange(e.target.value)}
-              className="h-[2rem] w-[6.5rem] cursor-pointer rounded-md border border-gray-200 outline-none"
+              className="h-[2rem] w-[6rem] cursor-pointer rounded-md border border-gray-200 outline-none"
             />
           );
         },
@@ -511,7 +541,10 @@ export default function AllJobs() {
           "Month Wise",
         ],
         filterVariant: "select",
-        size: 120,
+        size: 110,
+        minSize: 80,
+        maxSize: 140,
+        grow: true,
       },
       // Job DeadLine
       {
@@ -519,7 +552,7 @@ export default function AllJobs() {
         header: "Deadline",
         Cell: ({ cell, row }) => {
           const [date, setDate] = useState(
-            format(new Date(cell.getValue()), "yyyy-MM-dd")
+            format(new Date(cell.getValue()), "dd-MMM-yyyy")
           );
 
           const handleDateChange = (newDate) => {
@@ -529,11 +562,11 @@ export default function AllJobs() {
 
           return (
             <input
-              type="date"
+              type="text"
               value={date}
               onChange={(e) => setDate(e.target.value)}
               onBlur={(e) => handleDateChange(e.target.value)}
-              className=" h-[2rem] w-[6.5rem]
+              className=" h-[2rem] w-[6rem]
                cursor-pointer rounded-md border border-gray-200  outline-none"
             />
           );
@@ -580,7 +613,10 @@ export default function AllJobs() {
           "Month Wise",
         ],
         filterVariant: "select",
-        size: 120,
+        size: 110,
+        minSize: 80,
+        maxSize: 140,
+        grow: true,
       },
       //  Current Date
       {
@@ -588,7 +624,7 @@ export default function AllJobs() {
         header: "Job Date",
         Cell: ({ cell, row }) => {
           const [date, setDate] = useState(
-            format(new Date(cell.getValue()), "yyyy-MM-dd")
+            format(new Date(cell.getValue()), "dd-MMM-yyyy")
           );
 
           const handleDateChange = (newDate) => {
@@ -598,11 +634,11 @@ export default function AllJobs() {
 
           return (
             <input
-              type="date"
+              type="text"
               value={date}
               onChange={(e) => setDate(e.target.value)}
               onBlur={(e) => handleDateChange(e.target.value)}
-              className=" h-[2rem] w-[6.5rem]
+              className=" h-[2rem] w-[6rem]
                cursor-pointer rounded-md border border-gray-200  outline-none"
             />
           );
@@ -649,7 +685,10 @@ export default function AllJobs() {
           "Month Wise",
         ],
         filterVariant: "select",
-        size: 120,
+        size: 110,
+        minSize: 80,
+        maxSize: 140,
+        grow: true,
       },
       //  -----Due & Over Due Status----->
       {
@@ -685,7 +724,10 @@ export default function AllJobs() {
         },
         filterSelectOptions: ["Overdue", "Due"],
         filterVariant: "select",
-        size: 110,
+        size: 100,
+        minSize: 100,
+        maxSize: 120,
+        grow: true,
       },
       //
       {
@@ -754,6 +796,9 @@ export default function AllJobs() {
         filterSelectOptions: users.map((lead) => lead),
         filterVariant: "select",
         size: 110,
+        minSize: 100,
+        maxSize: 140,
+        grow: true,
       },
       {
         accessorKey: "totalTime",
@@ -767,7 +812,7 @@ export default function AllJobs() {
             </div>
           );
         },
-        size: 100,
+        size: 90,
       },
       {
         accessorKey: "timertracker",
@@ -820,16 +865,16 @@ export default function AllJobs() {
             </div>
           );
         },
-        size: 110,
+        size: 100,
       },
     ],
-
+    // eslint-disable-next-line
     [users, play, auth, note]
   );
 
   const table = useMaterialReactTable({
     columns,
-    data: active === "All" && !active1 ? tableData : filterData,
+    data: active === "All" && !active1 && !filterId ? tableData : filterData,
     getRowId: (originalRow) => originalRow.id,
     // enableRowSelection: true,
     enableStickyHeader: true,
@@ -844,6 +889,7 @@ export default function AllJobs() {
     enableColumnResizing: true,
     enableTopToolbar: true,
     enableBottomToolbar: true,
+    // enableEditing: true,
     // state: { isLoading: loading },
 
     enablePagination: true,
@@ -859,7 +905,7 @@ export default function AllJobs() {
         fontSize: "15px",
         backgroundColor: "#f0f0f0",
         color: "#000",
-        padding: ".7rem 0.4rem",
+        padding: ".7rem 0.3rem",
       },
     },
     muiTableBodyCellProps: {
@@ -925,6 +971,7 @@ export default function AllJobs() {
                     setActive(dep);
                     filterByDep(dep);
                     setActive1("");
+                    setFilterId("");
                   }}
                 >
                   {dep} ({getDepartmentCount(dep)})
@@ -978,6 +1025,7 @@ export default function AllJobs() {
                 setShowJobHolder(false);
                 setShowDue(false);
                 setActive1("");
+                setFilterId("");
               }}
               title="Clear filters"
             >

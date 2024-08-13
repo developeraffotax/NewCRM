@@ -8,6 +8,9 @@ const timerStatusSchema = new mongoose.Schema(
     taskName: {
       type: String,
     },
+    taskId: {
+      type: String,
+    },
     pageName: {
       type: String,
     },

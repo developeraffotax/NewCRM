@@ -10,6 +10,9 @@ import axios from "axios";
 import { IoIosTimer } from "react-icons/io";
 import { MdOutlineTimerOff } from "react-icons/md";
 import { FaStopwatch } from "react-icons/fa6";
+import socketIO from "socket.io-client";
+const ENDPOINT = process.env.REACT_APP_SOCKET_ENDPOINT || "";
+const socketId = socketIO(ENDPOINT, { transports: ["websocket"] });
 
 const stringToColor = (string) => {
   let hash = 0;
@@ -35,33 +38,9 @@ const formatElapsedTime = (createdAt) => {
   }
 };
 
-const notifications = [
-  {
-    _id: "657c5a54114ec768357fb9b2",
-    title: "New Order",
-    message: "You have a new order from Introduction to Web Development",
-    status: "unread",
-    createdAt: "2023-12-15T13:53:24.301+00:00",
-  },
-  {
-    _id: "657c5a54114ec768357fb9b2",
-    title: "New Order",
-    message: "You have a new order from Introduction to Web Development",
-    status: "unread",
-    createdAt: "2023-12-15T13:53:24.301+00:00",
-  },
-  {
-    _id: "657c5a54114ec768357fb9b2",
-    title: "New Order",
-    message: "You have a new order from Introduction to Web Development",
-    status: "unread",
-    createdAt: "2023-12-15T13:53:24.301+00:00",
-  },
-];
-
 export default function Header() {
   const [search, setSearch] = useState("");
-  const { auth, setAuth, time } = useAuth();
+  const { auth, setAuth, setFilterId } = useAuth();
   const [open, setOpen] = useState(false);
   const [show, setShow] = useState(false);
   const navigate = useNavigate();
@@ -69,6 +48,16 @@ export default function Header() {
   const [timerStatus, setTimerStatus] = useState([]);
   const [showTimerStatus, setShowTimerStatus] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [notificationData, setNotificationData] = useState([]);
+  const [audio] = useState(
+    typeof window !== "undefined" ? new Audio("/level-up-191997.mp3") : null
+  );
+
+  useEffect(() => {
+    if (audio) {
+      audio.load();
+    }
+  }, [audio]);
 
   const handleSearch = async () => {
     try {
@@ -127,7 +116,84 @@ export default function Header() {
 
   useEffect(() => {
     getTimerStatus();
-  }, [auth.user]);
+    socketId.on("newTimer", () => {
+      getTimerStatus();
+    });
+
+    return () => {
+      socketId.off("newTimer", getTimerStatus);
+    };
+    // eslint-disable-next-line
+  }, [auth.user, socketId]);
+
+  // Get ALl User Notifications
+  const getNotifications = async () => {
+    try {
+      const { data } = await axios.get(
+        `${process.env.REACT_APP_API_URL}/api/v1/notification/get/notification/${auth.user.id}`
+      );
+      setNotificationData(data.notifications);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  // Player
+  const notificationPlayer = () => {
+    if (audio) {
+      audio.play().catch((error) => {
+        console.log("Audio play failed: ", error);
+      });
+    }
+  };
+
+  useEffect(() => {
+    getNotifications();
+
+    // eslint-disable-next-line
+  }, []);
+
+  useEffect(() => {
+    socketId.on("newNotification", () => {
+      getNotifications();
+      notificationPlayer();
+    });
+
+    return () => {
+      socketId.off("newNotification", getNotifications);
+    };
+    // eslint-disable-next-line
+  }, [socketId]);
+
+  // Update Notification
+  const updateNotification = async (id) => {
+    try {
+      const { data } = await axios.put(
+        `${process.env.REACT_APP_API_URL}/api/v1/notification/update/notification/${id}`
+      );
+      if (data) {
+        getNotifications();
+        toast.success("Notification updated!");
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  // Update All Notifications
+  const updateAllNotification = async (id) => {
+    try {
+      const { data } = await axios.put(
+        `${process.env.REACT_APP_API_URL}/api/v1/notification/marks/all/${id}`
+      );
+      if (data) {
+        getNotifications();
+        toast.success("Notification updated!");
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   return (
     <div className="w-full h-[3.8rem] bg-gray-200">
@@ -158,7 +224,6 @@ export default function Header() {
                 <div
                   className="relative cursor-pointer m-2"
                   onClick={() => {
-                    getTimerStatus();
                     setShowTimerStatus(!showTimerStatus);
                   }}
                 >
@@ -175,9 +240,13 @@ export default function Header() {
                     {timerStatus ? "1" : "0"}
                   </span>
                 </div>
-                {timerStatus && !loading && (
+                {timerStatus && !loading ? (
                   <span className="text-[12px] font-semibold translate-x-[-.4rem]">
                     {formatElapsedTime(timerStatus?.createdAt)}
+                  </span>
+                ) : (
+                  <span className="text-[12px] font-semibold translate-x-[-.4rem]">
+                    0m
                   </span>
                 )}
               </div>
@@ -194,7 +263,10 @@ export default function Header() {
                   </h5>
                   <hr className="h-[1px] w-full bg-gray-400 my-2" />
                   {timerStatus ? (
-                    <Link to={timerStatus.taskLink}>
+                    <Link
+                      to={timerStatus.taskLink}
+                      onClick={() => setFilterId(timerStatus?.taskId)}
+                    >
                       <div className="px-2">
                         <div className="  bg-[#00000013] rounded-md  hover:bg-gray-300 font-Poppins border-b  border-b-[#fff]">
                           <div className="w-full flex cursor-pointer items-center justify-between py-2 px-1">
@@ -235,46 +307,67 @@ export default function Header() {
               >
                 <IoNotifications className="text-2xl container text-black " />
                 <span className="absolute -top-2 -right-2 bg-orange-600 rounded-full w-[20px] h-[20px] text-[12px] text-white flex items-center justify-center ">
-                  {notifications && notifications.length}
+                  {notificationData && notificationData.length}
                 </span>
               </div>
               {open && (
-                <div className="w-[350px] min-h-[40vh] max-h-[60vh]  overflow-y-scroll  pb-2 shadow-xl  bg-gray-100 absolute z-[999] top-[2rem] right-[1.6rem] rounded">
-                  <h5 className="text-[20px] text-center font-medium text-black  p-3 font-Poppins">
+                <div className="shadow-xl  bg-gray-100 absolute z-[999] top-[2rem] right-[1.6rem] rounded-md overflow-hidden">
+                  <h5 className="text-[20px] text-center font-medium text-black bg-orange-400  p-3 font-Poppins">
                     Notifications
                   </h5>
-                  {notifications &&
-                    notifications?.map((item, index) => (
-                      <div
-                        className="dark:bg-[#2d3a4ea1] bg-[#00000013] font-Poppins border-b dark:border-b-[#ffffff47] border-b-[#fff]"
-                        key={index}
-                      >
-                        <div className="w-full flex items-center justify-between p-2">
-                          <p className="text-black ">{item?.title}</p>
-                          <p
-                            className="text-black  cursor-pointer"
-                            // onClick={() => updateNotificationData(item._id)}
-                          >
-                            Mark as read
-                          </p>
-                        </div>
-                        <p className="p-2 text-gray-700  text-[14px]">
-                          {item?.message}
-                        </p>
-                        <p className="p-2 text-black  text-[14px] ">
-                          {format(item?.createdAt)}
-                        </p>
+                  <div className="w-[350px] min-h-[40vh] max-h-[60vh]  overflow-y-scroll   ">
+                    {notificationData &&
+                      notificationData?.map((item, index) => (
+                        <Link
+                          to={item?.redirectLink}
+                          key={item?._id}
+                          onClick={() => setFilterId(item?.taskId)}
+                        >
+                          <div className="dark:bg-[#2d3a4ea1] cursor-pointer bg-[#00000013] hover:bg-gray-300 transition-all duration-200 font-Poppins border-b dark:border-b-[#ffffff47] border-b-[#fff]">
+                            <div className="w-full flex items-center justify-between p-2">
+                              <p className="text-black ">{item?.title}</p>
+                              <p
+                                className="text-sky-500 hover:text-sky-600 text-[14px] transition-all duration-200  cursor-pointer"
+                                onClick={() => updateNotification(item._id)}
+                              >
+                                Mark as read
+                              </p>
+                            </div>
+                            <p className="p-2 text-gray-700  text-[14px]">
+                              {item?.description}
+                            </p>
+                            <p className="p-2 text-black  text-[14px] ">
+                              {format(item?.createdAt)}
+                            </p>
+                          </div>
+                        </Link>
+                      ))}
+
+                    {notificationData.length === 0 && (
+                      <div className="w-full h-[30vh] text-black  flex items-center justify-center flex-col gap-2">
+                        <span className="text-[19px]">🤯</span>
+                        Notifications not available!.
                       </div>
-                    ))}
-                  {notifications.length === 0 && (
-                    <div className="w-full h-[30vh] text-black   flex items-center justify-center">
-                      Notification not received!
-                    </div>
-                  )}
+                    )}
+                  </div>
+                  <div
+                    className="w-full  cursor-pointer bg-gray-200    px-2 flex  items-center justify-end"
+                    onClick={() => updateAllNotification(auth.user.id)}
+                  >
+                    <button
+                      disabled={notificationData.length === 0}
+                      className={`text-[14px] py-2 cursor-pointer text-sky-500 hover:text-sky-600 disabled:cursor-not-allowed  ${
+                        notificationData.length === 0 && "cursor-not-allowed"
+                      }`}
+                    >
+                      Mark all as read
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
           </div>
+          {/* ----------Profile Image-------- */}
           <div className="relative">
             <div
               className="w-[2.6rem] h-[2.6rem] cursor-pointer relative rounded-full overflow-hidden flex items-center justify-center text-white border-2 border-orange-600"

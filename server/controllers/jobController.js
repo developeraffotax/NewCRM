@@ -1,4 +1,6 @@
 import jobsModel from "../models/jobsModel.js";
+import notificationModel from "../models/notificationModel.js";
+import userModel from "../models/userModel.js";
 
 // Create Job
 export const createJob = async (req, res) => {
@@ -83,7 +85,6 @@ export const createJob = async (req, res) => {
 };
 
 // Get All Clients
-
 export const getAllClients = async (req, res) => {
   try {
     const clients = await jobsModel.find({}).sort({ updatedAt: -1 });
@@ -184,7 +185,7 @@ export const updateLead = async (req, res) => {
   }
 };
 
-// Update Client Lead
+// Update Job Holder
 export const updateJobHolder = async (req, res) => {
   try {
     const jobId = req.params.id;
@@ -209,10 +210,22 @@ export const updateJobHolder = async (req, res) => {
       { new: true }
     );
 
+    // Create Notification
+    const user = await userModel.findOne({ name: jobHolder });
+
+    const notification = await notificationModel.create({
+      title: "New Job Assigned",
+      redirectLink: "/job-planning",
+      description: `${req.user.user.name} assign a new job of "${clientJob.job.jobName}"`,
+      taskId: `${clientJob._id}`,
+      userId: user._id,
+    });
+
     res.status(200).send({
       success: true,
       message: "Job holder updated successfully!",
       clientJob: clientJob,
+      notification: notification,
     });
   } catch (error) {
     console.log(error);

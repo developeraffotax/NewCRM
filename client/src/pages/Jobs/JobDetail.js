@@ -190,8 +190,8 @@ export default function JobDetail({
                 />
               </span>
             </div>
-            {/*  */}
-            <div className="flex items-center gap-4">
+            {/*------------- Comment------- */}
+            {/* <div className="flex items-center gap-4">
               <span className="flex items-center gap-1 text-gray-500 w-[30%]">
                 <MdOutlineInsertComment className="h-4 w-4 text-gray-500" />{" "}
                 Comments
@@ -207,7 +207,7 @@ export default function JobDetail({
                   <MdInsertComment className="h-6 w-6 text-orange-500 hover:text-orange-600 " />
                 </span>
               </span>
-            </div>
+            </div> */}
             {/*  */}
           </div>
           <hr className="h-[1.5px] w-full bg-gray-400 my-3" />

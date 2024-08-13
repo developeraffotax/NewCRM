@@ -9,6 +9,9 @@ import axios from "axios";
 import { FaCirclePlay } from "react-icons/fa6";
 import { IoStopCircle } from "react-icons/io5";
 import { useAuth } from "../context/authContext";
+import socketIO from "socket.io-client";
+const ENDPOINT = process.env.REACT_APP_SOCKET_ENDPOINT || "";
+const socketId = socketIO(ENDPOINT, { transports: ["websocket"] });
 
 export const Timer = forwardRef(
   (
@@ -121,6 +124,12 @@ export const Timer = forwardRef(
         setIsRunning(true);
         setStartTime(new Date());
         setAnyTimerRunning(true);
+        // Send Socket Timer
+        socketId.emit("timer", {
+          clientId: clientId,
+          jobId: jobId,
+          note: "Started work on job",
+        });
       } catch (error) {
         console.error("Error starting timer:", error);
       }
@@ -141,6 +150,11 @@ export const Timer = forwardRef(
         setElapsedTime(0);
         gettotalTime(timerId);
         localStorage.removeItem("timer_Id");
+        // Send Socket Timer
+        socketId.emit("timer", {
+          timerId: timerId,
+          note: note,
+        });
       } catch (error) {
         console.error("Error stopping timer:", error);
       }
@@ -169,7 +183,7 @@ export const Timer = forwardRef(
       try {
         await axios.post(
           `${process.env.REACT_APP_API_URL}/api/v1/timer/timer_task/status`,
-          { userId: auth.user.id, taskName, pageName, taskLink }
+          { userId: auth.user.id, taskName, pageName, taskLink, taskId: jobId }
         );
       } catch (error) {
         console.log(error);

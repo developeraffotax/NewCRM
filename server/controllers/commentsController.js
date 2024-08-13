@@ -1,9 +1,11 @@
 import jobsModel from "../models/jobsModel.js";
+import notificationModel from "../models/notificationModel.js";
+import userModel from "../models/userModel.js";
 
 // Create Comment
 export const createComment = async (req, res) => {
   try {
-    const { comment, jobId } = req.body;
+    const { comment, jobId, jobHolder } = req.body;
 
     const job = await jobsModel.findById(jobId);
     if (!job) {
@@ -22,14 +24,24 @@ export const createComment = async (req, res) => {
 
     job.comments.push(newComment);
 
-    // Create Notification
-
     await job.save();
+
+    // Create Notification
+    const user = await userModel.findOne({ name: job.job.jobHolder });
+
+    const notification = await notificationModel.create({
+      title: "New comment received!",
+      redirectLink: "/job-planning",
+      description: `${req.user.user.name} add a new comment of "${job.job.jobName}". ${comment}`,
+      taskId: jobId,
+      userId: user._id,
+    });
 
     res.status(200).send({
       success: true,
       message: "Comment Posted!",
       job: job,
+      notification: notification,
     });
   } catch (error) {
     console.log(error);
@@ -74,10 +86,21 @@ export const commentReply = async (req, res) => {
     await job.save();
 
     // Create Notification
+    const user = await userModel.findOne({ name: job.job.jobHolder });
+
+    const notification = await notificationModel.create({
+      title: "New comment reply received!",
+      redirectLink: "/job-planning",
+      description: `${req.user.user.name} add a new comment reply of "${job.job.jobName}". ${commentReply}`,
+      taskId: jobId,
+      userId: user._id,
+    });
+
     res.status(200).send({
       success: true,
       message: "Reply Posted!",
       job: job,
+      notification: notification,
     });
   } catch (error) {
     console.log(error);

@@ -14,6 +14,9 @@ import { format } from "date-fns";
 import { AiFillLike, AiOutlineLike } from "react-icons/ai";
 import Loader from "../../utlis/Loader";
 import { MentionsInput, Mention } from "react-mentions";
+import socketIO from "socket.io-client";
+const ENDPOINT = process.env.REACT_APP_SOCKET_ENDPOINT || "";
+const socketId = socketIO(ENDPOINT, { transports: ["websocket"] });
 
 export default function JobCommentModal({
   setIsComment,
@@ -126,6 +129,15 @@ export default function JobCommentModal({
         getSingleJobComment();
         setLoading(false);
         toast.success("Comment Posted!");
+        // Send Socket Notification
+        socketId.emit("notification", {
+          title: "New comment received!",
+          redirectLink: "/job-planning",
+          description: `${auth.user.name} add a new comment. ${comment}`,
+          taskId: jobId,
+          userId: auth.user.id,
+          status: "unread",
+        });
       }
     } catch (error) {
       console.log(error);
@@ -149,6 +161,15 @@ export default function JobCommentModal({
         setCommentReply("");
         getSingleJobComment();
         toast.success("Reply added successfully!");
+        // Send Socket Notification
+        socketId.emit("notification", {
+          title: "New comment reply received!",
+          redirectLink: "/job-planning",
+          description: `${auth.user.name} add a new comment reply . ${commentReply}`,
+          taskId: jobId,
+          userId: auth.user.id,
+          status: "unread",
+        });
       }
     } catch (error) {
       console.log(error);

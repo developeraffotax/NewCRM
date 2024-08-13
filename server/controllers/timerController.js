@@ -166,7 +166,7 @@ export const totalTime = async (req, res) => {
 // Add Timer Status
 export const addTimerStatus = async (req, res) => {
   try {
-    const { userId, taskName, pageName, taskLink } = req.body;
+    const { userId, taskName, pageName, taskLink, taskId } = req.body;
     if (!userId || !taskName || !pageName || !taskLink) {
       return res.status(400).send({
         success: false,
@@ -187,6 +187,7 @@ export const addTimerStatus = async (req, res) => {
       taskName,
       pageName,
       taskLink,
+      taskId,
     });
 
     res.status(200).send({
