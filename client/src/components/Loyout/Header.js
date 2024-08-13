@@ -225,6 +225,7 @@ export default function Header() {
                   className="relative cursor-pointer m-2"
                   onClick={() => {
                     setShowTimerStatus(!showTimerStatus);
+                    getTimerStatus();
                   }}
                 >
                   <FaStopwatch
@@ -303,7 +304,10 @@ export default function Header() {
             <div className="relative">
               <div
                 className="relative cursor-pointer m-2"
-                onClick={() => setOpen(!open)}
+                onClick={() => {
+                  getNotifications();
+                  setOpen(!open);
+                }}
               >
                 <IoNotifications className="text-2xl container text-black " />
                 <span className="absolute -top-2 -right-2 bg-orange-600 rounded-full w-[20px] h-[20px] text-[12px] text-white flex items-center justify-center ">
