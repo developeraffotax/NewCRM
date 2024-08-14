@@ -223,7 +223,7 @@ export default function AllJobs() {
           (sum, client) => sum + Number(client.totalHours),
           0
         );
-        setTotalHours(totalHours.toFixed(2);
+        setTotalHours(totalHours.toFixed(2));
         setLoading(false);
       }
     } catch (error) {
