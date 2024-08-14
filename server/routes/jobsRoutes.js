@@ -1,12 +1,16 @@
 import express from "express";
 import {
+  createDublicateJob,
   createJob,
   deleteClientJob,
   getAllClients,
+  getClientJobs,
   getClientWithJobs,
+  importData,
   singleClientComments,
   singleClientJob,
   updateClientJob,
+  updateClientStatus,
   updateDates,
   updateJobHolder,
   updateLead,
@@ -48,5 +52,17 @@ router.put("/update/dates/:id", requiredSignIn, updateDates);
 
 // Get Comments
 router.get("/job/comments/:id", singleClientComments);
+
+// Get Only Status (Completed) Jobs
+router.get("/jobs/status/complete", getClientJobs);
+
+// Create Dublicate Job (Completed)
+router.post("/dublicate/job/complete", requiredSignIn, createDublicateJob);
+
+// Import Data from file
+router.post("/import/data", importData);
+
+// Update Client Status
+router.put("/update/client/status/:id", requiredSignIn, updateClientStatus);
 
 export default router;

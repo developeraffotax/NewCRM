@@ -1,6 +1,15 @@
 import jobsModel from "../models/jobsModel.js";
 import notificationModel from "../models/notificationModel.js";
 import userModel from "../models/userModel.js";
+import fs from "fs";
+import path from "path";
+import multer from "multer";
+import csvParser from "csv-parser";
+import xlsx from "xlsx";
+import { google } from "googleapis";
+
+// Configure multer for file uploads
+const upload = multer({ dest: "uploads/" });
 
 // Create Job
 export const createJob = async (req, res) => {
@@ -87,7 +96,9 @@ export const createJob = async (req, res) => {
 // Get All Clients
 export const getAllClients = async (req, res) => {
   try {
-    const clients = await jobsModel.find({}).sort({ updatedAt: -1 });
+    const clients = await jobsModel
+      .find({ status: { $ne: "completed" } })
+      .sort({ updatedAt: -1 });
 
     res.status(200).send({
       success: true,
@@ -325,7 +336,7 @@ export const getClientWithJobs = async (req, res) => {
     }
 
     const clientJobs = await jobsModel
-      .find({ companyName: companyName })
+      .find({ companyName: companyName, status: { $ne: "completed" } })
       .select("job");
 
     if (!clientJobs) {
@@ -536,6 +547,334 @@ export const singleClientComments = async (req, res) => {
       success: false,
       message: "Error in get single job!",
       error: error,
+    });
+  }
+};
+
+// Get Only Status (Completed) Jobs
+export const getClientJobs = async (req, res) => {
+  try {
+    const clients = await jobsModel
+      .find({ status: "completed" })
+      .sort({ updatedAt: -1 });
+
+    res.status(200).send({
+      success: true,
+      message: "All client jobs whose status is completed!",
+      clients: clients,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      success: false,
+      message: "Error while get all job!",
+      error: error,
+    });
+  }
+};
+
+// Dublicate Job
+export const createDublicateJob = async (req, res) => {
+  try {
+    const {
+      _id,
+      clientName,
+      regNumber,
+      companyName,
+      email,
+      totalHours,
+      currentDate,
+      source,
+      clientType,
+      country,
+      fee,
+      ctLogin,
+      pyeLogin,
+      trLogin,
+      vatLogin,
+      authCode,
+      utr,
+      isActive,
+      totalTime,
+      comments,
+      job,
+    } = req.body;
+
+    // Check for required fields
+    if (!clientName || !companyName || !email || !totalHours || !currentDate) {
+      return res.status(400).send({
+        success: false,
+        message: "Please fill the required fields!",
+      });
+    }
+
+    const clientJob = await jobsModel.create({
+      clientName,
+      regNumber,
+      companyName,
+      email,
+      totalHours,
+      currentDate,
+      source,
+      clientType,
+      country,
+      fee,
+      ctLogin,
+      pyeLogin,
+      trLogin,
+      vatLogin,
+      authCode,
+      utr,
+      isActive,
+      status: "completed",
+      totalTime,
+      comments,
+      job,
+    });
+
+    const isExisting = await jobsModel.findById({ _id: _id });
+
+    let yearEnd = new Date(isExisting.job.yearEnd);
+    let jobDeadline = new Date(isExisting.job.jobDeadline);
+    let currDate = new Date(isExisting.currentDate);
+
+    if (
+      isExisting.job.jobName === "Bookkeeping" ||
+      isExisting.job.jobName === "Payroll"
+    ) {
+      // Add 1 month
+      yearEnd.setMonth(yearEnd.getMonth() + 1);
+      jobDeadline.setMonth(jobDeadline.getMonth() + 1);
+      currDate.setMonth(currDate.getMonth() + 1);
+    } else if (isExisting.job.jobName === "Vat Return") {
+      // Add 3 months
+      yearEnd.setMonth(yearEnd.getMonth() + 3);
+      jobDeadline.setMonth(jobDeadline.getMonth() + 3);
+      currDate.setMonth(currDate.getMonth() + 3);
+    } else {
+      // Add 12 months
+      yearEnd.setMonth(yearEnd.getMonth() + 12);
+      jobDeadline.setMonth(jobDeadline.getMonth() + 12);
+      currDate.setMonth(currDate.getMonth() + 12);
+    }
+
+    // Update the job document with the new dates
+    isExisting.job.yearEnd = yearEnd;
+    isExisting.job.jobDeadline = jobDeadline;
+    isExisting.currentDate = currDate;
+    isExisting.totalTime = "0 s";
+
+    await isExisting.save();
+
+    return res.status(200).send({
+      success: true,
+      message: "status completed!",
+      jobs: clientJob,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({
+      success: false,
+      message: "Error while creating job!",
+      error: error.message,
+    });
+  }
+};
+
+// Update Client_Job Complete Status
+export const updateClientStatus = async (req, res) => {
+  try {
+    const jobId = req.params.id;
+
+    if (!jobId) {
+      return res.status(400).send({
+        success: false,
+        message: "Job id is required!",
+      });
+    }
+
+    const clientJob = await jobsModel.findByIdAndUpdate(
+      { _id: jobId },
+      { $set: { status: "process" } },
+      { new: true }
+    );
+
+    res.status(200).send({
+      success: true,
+      message: "Client Job status updated successfully!",
+      clientJob: clientJob,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      success: false,
+      message: "Error in update job status !",
+      error: error,
+    });
+  }
+};
+
+// Import Data from file or Google Sheets
+
+export const importData = async (req, res) => {
+  try {
+    const { googleSheetId } = req.body;
+
+    if (googleSheetId) {
+      // Import data from Google Sheets
+      await importFromGoogleSheets(googleSheetId, res);
+    } else {
+      // Import data from file
+      upload.single("file")(req, res, async (err) => {
+        if (err) {
+          return res.status(400).send({
+            success: false,
+            message: "File upload failed!",
+          });
+        }
+
+        const filePath = path.join(
+          __dirname,
+          `../uploads/${req.file.filename}`
+        );
+        const ext = path.extname(req.file.originalname).toLowerCase();
+
+        let data = [];
+
+        if (ext === ".csv") {
+          // Parse CSV file
+          fs.createReadStream(filePath)
+            .pipe(csvParser())
+            .on("data", (row) => {
+              data.push(row);
+            })
+            .on("end", async () => {
+              await saveDataToDB(data, res);
+              fs.unlinkSync(filePath); // Remove file after processing
+            });
+        } else if (ext === ".xlsx" || ext === ".xls") {
+          // Parse Excel file
+          const workbook = xlsx.readFile(filePath);
+          const sheetName = workbook.SheetNames[0];
+          const sheet = workbook.Sheets[sheetName];
+          data = xlsx.utils.sheet_to_json(sheet);
+
+          await saveDataToDB(data, res);
+          fs.unlinkSync(filePath); // Remove file after processing
+        } else {
+          return res.status(400).send({
+            success: false,
+            message: "Unsupported file format!",
+          });
+        }
+      });
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({
+      success: false,
+      message: "Error while importing data!",
+      error: error.message,
+    });
+  }
+};
+
+// Helper function to save data to the database
+const saveDataToDB = async (data, res) => {
+  try {
+    for (const row of data) {
+      const {
+        clientName,
+        regNumber,
+        companyName,
+        email,
+        totalHours,
+        currentDate,
+        source,
+        clientType,
+        country,
+        fee,
+        ctLogin,
+        pyeLogin,
+        trLogin,
+        vatLogin,
+        authCode,
+        utr,
+        job,
+      } = row;
+
+      await jobsModel.create({
+        clientName,
+        regNumber,
+        companyName,
+        email,
+        totalHours,
+        currentDate,
+        source,
+        clientType,
+        country,
+        fee,
+        ctLogin,
+        pyeLogin,
+        trLogin,
+        vatLogin,
+        authCode,
+        utr,
+        job,
+      });
+    }
+
+    res.status(200).send({
+      success: true,
+      message: "Data imported successfully!",
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({
+      success: false,
+      message: "Error while saving data!",
+      error: error.message,
+    });
+  }
+};
+
+// Helper function to import data from Google Sheets
+const importFromGoogleSheets = async (sheetId, res) => {
+  try {
+    const auth = new google.auth.GoogleAuth({
+      keyFile: "credentials.json", // Path to your credentials file
+      scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
+    });
+
+    const sheets = google.sheets({ version: "v4", auth });
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: sheetId,
+      range: "Sheet1", // Adjust the sheet name and range as needed
+    });
+
+    const rows = response.data.values;
+    if (rows.length) {
+      const headers = rows[0];
+      const data = rows.slice(1).map((row) =>
+        headers.reduce((acc, header, index) => {
+          acc[header] = row[index];
+          return acc;
+        }, {})
+      );
+
+      await saveDataToDB(data, res);
+    } else {
+      res.status(400).send({
+        success: false,
+        message: "No data found in Google Sheets!",
+      });
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({
+      success: false,
+      message: "Error while importing data from Google Sheets!",
+      error: error.message,
     });
   }
 };

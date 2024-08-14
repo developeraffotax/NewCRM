@@ -26,6 +26,7 @@ import JobCommentModal from "./JobCommentModal";
 import { MdAutoGraph } from "react-icons/md";
 import { useLocation } from "react-router-dom";
 import socketIO from "socket.io-client";
+import CompletedJobs from "./CompletedJobs";
 const ENDPOINT = process.env.REACT_APP_SOCKET_ENDPOINT || "";
 const socketId = socketIO(ENDPOINT, { transports: ["websocket"] });
 
@@ -53,7 +54,9 @@ export default function AllJobs() {
   const timerRef = useRef();
   const [showStatus, setShowStatus] = useState(false);
   const location = useLocation();
-  console.log("FilterId:", filterId);
+  const [showCompleted, setShowCompleted] = useState(false);
+  const [totalHours, setTotalHours] = useState("0");
+  console.log("Total Hours:", totalHours);
 
   // Extract the current path
   const currentPath = location.pathname;
@@ -216,6 +219,11 @@ export default function AllJobs() {
       );
       if (data) {
         setTableData(data?.clients);
+        const totalHours = data.clients.reduce(
+          (sum, client) => sum + Number(client.totalHours),
+          0
+        );
+        setTotalHours(totalHours);
         setLoading(false);
       }
     } catch (error) {
@@ -880,7 +888,7 @@ export default function AllJobs() {
     enableStickyHeader: true,
     enableStickyFooter: true,
     columnFilterDisplayMode: "popover",
-    muiTableContainerProps: { sx: { maxHeight: "650px" } },
+    muiTableContainerProps: { sx: { maxHeight: "700px" } },
     enableColumnActions: false,
     enableColumnFilters: true,
     enableSorting: true,
@@ -930,190 +938,166 @@ export default function AllJobs() {
 
   return (
     <Layout>
-      {loading ? (
-        <div className="flex items-center justify-center w-full h-screen px-4 py-4">
-          <Loader />
+      <div className="w-full min-h-screen py-4 px-2 sm:px-4 ">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <h1 className=" text-xl sm:text-2xl font-semibold ">Job</h1>
+            <span className="" onClick={() => setShow(!show)}>
+              {show ? (
+                <IoIosArrowDropup className="h-5 w-5 cursor-pointer" />
+              ) : (
+                <IoIosArrowDropdown className="h-5 w-5 cursor-pointer" />
+              )}
+            </span>
+          </div>
+          <button
+            className={`${style.button1} text-[15px] `}
+            onClick={() => setIsOpen(true)}
+          >
+            Add Client
+          </button>
         </div>
-      ) : (
-        <div className="w-full min-h-screen py-4 px-2 sm:px-4 ">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <h1 className=" text-xl sm:text-2xl font-semibold ">Job</h1>
-              <span className="" onClick={() => setShow(!show)}>
-                {show ? (
-                  <IoIosArrowDropup className="h-5 w-5 cursor-pointer" />
-                ) : (
-                  <IoIosArrowDropdown className="h-5 w-5 cursor-pointer" />
-                )}
-              </span>
+        {/*  */}
+
+        {/* -----------Filters By Deparment--------- */}
+        <div className="flex items-center flex-wrap gap-2 mt-3">
+          {departments?.map((dep, i) => {
+            getDueAndOverdueCountByDepartment(dep);
+            return (
+              <div
+                className={`py-1 rounded-tl-md rounded-tr-md px-1 cursor-pointer font-[500] text-[14px] ${
+                  active === dep &&
+                  " border-2 border-b-0 text-orange-600 border-gray-300"
+                }`}
+                key={i}
+                onClick={() => {
+                  setActive(dep);
+                  filterByDep(dep);
+                  setShowCompleted(false);
+                  setActive1("");
+                  setFilterId("");
+                }}
+              >
+                {dep} ({getDepartmentCount(dep)})
+              </div>
+            );
+          })}
+          <div
+            className={`py-1 rounded-tl-md rounded-tr-md px-1 cursor-pointer font-[500] text-[14px] ${
+              activeBtn === "completed" &&
+              showCompleted &&
+              " border-2 border-b-0 text-orange-600 border-gray-300"
+            }`}
+            onClick={() => {
+              setActiveBtn("completed");
+              setShowCompleted(true);
+              setActive("");
+            }}
+          >
+            Completed
+          </div>
+          {/*  */}
+          {/* -------------Filter Open Buttons-------- */}
+          <span
+            className={` p-1 rounded-md hover:shadow-md bg-gray-50 mb-1  cursor-pointer border  ${
+              activeBtn === "jobHolder" && "bg-orange-500 text-white"
+            }`}
+            onClick={() => {
+              setActiveBtn("jobHolder");
+              setShowJobHolder(!showJobHolder);
+            }}
+            title="Filter by Job Holder"
+          >
+            <IoBriefcaseOutline className="h-6 w-6  cursor-pointer " />
+          </span>
+          <span
+            className={` p-1 rounded-md hover:shadow-md mb-1 bg-gray-50 cursor-pointer border ${
+              activeBtn === "due" && "bg-orange-500 text-white"
+            }`}
+            onClick={() => {
+              setActiveBtn("due");
+              setShowDue(!showDue);
+            }}
+            title="Filter by Status"
+          >
+            <TbCalendarDue className="h-6 w-6  cursor-pointer" />
+          </span>
+          <span
+            className={` p-1 rounded-md hover:shadow-md mb-1 bg-gray-50 cursor-pointer border ${
+              activeBtn === "status" && "bg-orange-500 text-white"
+            }`}
+            onClick={() => {
+              setActiveBtn("status");
+              setShowStatus(!showStatus);
+            }}
+            title="Filter by Job Status"
+          >
+            <MdAutoGraph className="h-6 w-6  cursor-pointer" />
+          </span>
+          <span
+            className={` p-1 rounded-md hover:shadow-md mb-1 bg-gray-50 cursor-pointer border `}
+            onClick={() => {
+              setActive("All");
+              setActiveBtn("");
+              setShowStatus(false);
+              setShowJobHolder(false);
+              setShowDue(false);
+              setActive1("");
+              setFilterId("");
+            }}
+            title="Clear filters"
+          >
+            <IoClose className="h-6 w-6  cursor-pointer" />
+          </span>
+        </div>
+        {/*  */}
+        <hr className="mb-1 bg-gray-300 w-full h-[1px]" />
+
+        {/* ----------Job_Holder Summery Filters---------- */}
+        {showJobHolder && activeBtn === "jobHolder" && (
+          <>
+            <div className="w-full  py-2 ">
+              <h3 className="text-[19px] font-semibold text-black">
+                Job Holder Summary
+              </h3>
+              <div className="flex items-center flex-wrap gap-4">
+                {users?.map((user, i) => (
+                  <div
+                    className={`py-1 rounded-tl-md rounded-tr-md px-1 cursor-pointer font-[500] text-[14px] ${
+                      active1 === user &&
+                      "  border-b-2 text-orange-600 border-orange-600"
+                    }`}
+                    key={i}
+                    onClick={() => {
+                      setActive1(user);
+                      filterByDepStat(user, active);
+                    }}
+                  >
+                    {user} ({getJobHolderCount(user, active)})
+                  </div>
+                ))}
+              </div>
             </div>
-            <button
-              className={`${style.button1} text-[15px] `}
-              onClick={() => setIsOpen(true)}
-            >
-              Add Client
-            </button>
-          </div>
-          {/*  */}
+            <hr className="mb-1 bg-gray-300 w-full h-[1px]" />
+          </>
+        )}
 
-          {/* -----------Filters By Deparment--------- */}
-          <div className="flex items-center flex-wrap gap-2 mt-3">
-            {departments?.map((dep, i) => {
-              getDueAndOverdueCountByDepartment(dep);
-              return (
-                <div
-                  className={`py-1 rounded-tl-md rounded-tr-md px-1 cursor-pointer font-[500] text-[14px] ${
-                    active === dep &&
-                    " border-2 border-b-0 text-orange-600 border-gray-300"
-                  }`}
-                  key={i}
-                  onClick={() => {
-                    setActive(dep);
-                    filterByDep(dep);
-                    setActive1("");
-                    setFilterId("");
-                  }}
-                >
-                  {dep} ({getDepartmentCount(dep)})
-                </div>
-              );
-            })}
-            {/*  */}
-            {/* -------------Filter Open Buttons-------- */}
-            <span
-              className={` p-1 rounded-md hover:shadow-md bg-gray-50 mb-1  cursor-pointer border  ${
-                activeBtn === "jobHolder" && "bg-orange-500 text-white"
-              }`}
-              onClick={() => {
-                setActiveBtn("jobHolder");
-                setShowJobHolder(!showJobHolder);
-              }}
-              title="Filter by Job Holder"
-            >
-              <IoBriefcaseOutline className="h-6 w-6  cursor-pointer " />
-            </span>
-            <span
-              className={` p-1 rounded-md hover:shadow-md mb-1 bg-gray-50 cursor-pointer border ${
-                activeBtn === "due" && "bg-orange-500 text-white"
-              }`}
-              onClick={() => {
-                setActiveBtn("due");
-                setShowDue(!showDue);
-              }}
-              title="Filter by Status"
-            >
-              <TbCalendarDue className="h-6 w-6  cursor-pointer" />
-            </span>
-            <span
-              className={` p-1 rounded-md hover:shadow-md mb-1 bg-gray-50 cursor-pointer border ${
-                activeBtn === "status" && "bg-orange-500 text-white"
-              }`}
-              onClick={() => {
-                setActiveBtn("status");
-                setShowStatus(!showStatus);
-              }}
-              title="Filter by Job Status"
-            >
-              <MdAutoGraph className="h-6 w-6  cursor-pointer" />
-            </span>
-            <span
-              className={` p-1 rounded-md hover:shadow-md mb-1 bg-gray-50 cursor-pointer border `}
-              onClick={() => {
-                setActive("All");
-                setActiveBtn("");
-                setShowStatus(false);
-                setShowJobHolder(false);
-                setShowDue(false);
-                setActive1("");
-                setFilterId("");
-              }}
-              title="Clear filters"
-            >
-              <IoClose className="h-6 w-6  cursor-pointer" />
-            </span>
-          </div>
-          {/*  */}
-          <hr className="mb-1 bg-gray-300 w-full h-[1px]" />
-
-          {/* ----------Job_Holder Summery Filters---------- */}
-          {showJobHolder && activeBtn === "jobHolder" && (
-            <>
-              <div className="w-full  py-2 ">
-                <h3 className="text-[19px] font-semibold text-black">
-                  Job Holder Summary
-                </h3>
-                <div className="flex items-center flex-wrap gap-4">
-                  {users?.map((user, i) => (
-                    <div
-                      className={`py-1 rounded-tl-md rounded-tr-md px-1 cursor-pointer font-[500] text-[14px] ${
-                        active1 === user &&
-                        "  border-b-2 text-orange-600 border-orange-600"
-                      }`}
-                      key={i}
-                      onClick={() => {
-                        setActive1(user);
-                        filterByDepStat(user, active);
-                      }}
-                    >
-                      {user} ({getJobHolderCount(user, active)})
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <hr className="mb-1 bg-gray-300 w-full h-[1px]" />
-            </>
-          )}
-
-          {/* ----------Date Status Summery Filters---------- */}
-          {showDue && activeBtn === "due" && (
-            <>
-              <div className="w-full py-2">
-                <h3 className="text-[19px] font-semibold text-black">
-                  Date Status Summary
-                </h3>
-                <div className="flex items-center flex-wrap gap-4">
-                  {dateStatus?.map((stat, i) => {
-                    const { due, overdue } =
-                      getDueAndOverdueCountByDepartment(active);
-                    return (
-                      <div
-                        className={`py-1 rounded-tl-md rounded-tr-md px-1 cursor-pointer font-[500] text-[14px] ${
-                          active1 === stat &&
-                          " border-b-2 text-orange-600 border-orange-600"
-                        }`}
-                        key={i}
-                        onClick={() => {
-                          setActive1(stat);
-                          filterByDepStat(stat, active);
-                        }}
-                      >
-                        {stat === "Due" ? (
-                          <span>Due {due}</span>
-                        ) : (
-                          <span>Overdue {overdue}</span>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-              <hr className="mb-1 bg-gray-300 w-full h-[1px]" />
-            </>
-          )}
-
-          {/* ----------Status Summery Filters---------- */}
-          {showStatus && activeBtn === "status" && (
-            <>
-              <div className="w-full  py-2 ">
-                <h3 className="text-[19px] font-semibold text-black">
-                  Status Summary
-                </h3>
-                <div className="flex items-center flex-wrap gap-4">
-                  {status?.map((stat, i) => (
+        {/* ----------Date Status Summery Filters---------- */}
+        {showDue && activeBtn === "due" && (
+          <>
+            <div className="w-full py-2">
+              <h3 className="text-[19px] font-semibold text-black">
+                Date Status Summary
+              </h3>
+              <div className="flex items-center flex-wrap gap-4">
+                {dateStatus?.map((stat, i) => {
+                  const { due, overdue } =
+                    getDueAndOverdueCountByDepartment(active);
+                  return (
                     <div
                       className={`py-1 rounded-tl-md rounded-tr-md px-1 cursor-pointer font-[500] text-[14px] ${
                         active1 === stat &&
-                        "  border-b-2 text-orange-600 border-orange-600"
+                        " border-b-2 text-orange-600 border-orange-600"
                       }`}
                       key={i}
                       onClick={() => {
@@ -1121,23 +1105,84 @@ export default function AllJobs() {
                         filterByDepStat(stat, active);
                       }}
                     >
-                      {stat} ({getStatusCount(stat, active)})
+                      {stat === "Due" ? (
+                        <span>Due {due}</span>
+                      ) : (
+                        <span>Overdue {overdue}</span>
+                      )}
                     </div>
-                  ))}
-                </div>
+                  );
+                })}
               </div>
-              <hr className="mb-1 bg-gray-300 w-full h-[1px]" />
-            </>
-          )}
-
-          {/* ---------------------Data Table---------------- */}
-          <div className="w-full h-screen  relative">
-            <div className="h-screen hidden1 overflow-y-scroll   relative ">
-              <MaterialReactTable table={table} />
             </div>
+            <hr className="mb-1 bg-gray-300 w-full h-[1px]" />
+          </>
+        )}
+
+        {/* ----------Status Summery Filters---------- */}
+        {showStatus && activeBtn === "status" && (
+          <>
+            <div className="w-full  py-2 ">
+              <h3 className="text-[19px] font-semibold text-black">
+                Status Summary
+              </h3>
+              <div className="flex items-center flex-wrap gap-4">
+                {status?.map((stat, i) => (
+                  <div
+                    className={`py-1 rounded-tl-md rounded-tr-md px-1 cursor-pointer font-[500] text-[14px] ${
+                      active1 === stat &&
+                      "  border-b-2 text-orange-600 border-orange-600"
+                    }`}
+                    key={i}
+                    onClick={() => {
+                      setActive1(stat);
+                      filterByDepStat(stat, active);
+                    }}
+                  >
+                    {stat} ({getStatusCount(stat, active)})
+                  </div>
+                ))}
+              </div>
+            </div>
+            <hr className="mb-1 bg-gray-300 w-full h-[1px]" />
+          </>
+        )}
+
+        {/* ---------------------Data Table---------------- */}
+        {!showCompleted ? (
+          <>
+            {loading ? (
+              <div className="flex items-center justify-center w-full h-screen px-4 py-4">
+                <Loader />
+              </div>
+            ) : (
+              <div className="w-full min-h-screen relative">
+                <div className="h-full hidden1 overflow-y-scroll relative">
+                  <MaterialReactTable table={table} />
+                </div>
+                <span className="absolute bottom-4 left-4 z-10 font-semibold text-[15px] text-gray-900">
+                  Total Hours: {totalHours}
+                </span>
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="w-full min-h-screen  relative">
+            <CompletedJobs
+              getSingleJobDetail={getSingleJobDetail}
+              setCompanyName={setCompanyName}
+              users={users}
+              handleUpdateJobHolder={handleUpdateJobHolder}
+              handleUpdateDates={handleUpdateDates}
+              getStatus={getStatus}
+              setJobId={setJobId}
+              setIsComment={setIsComment}
+              allClientJobData={allClientJobData}
+            />
           </div>
-        </div>
-      )}
+        )}
+      </div>
+
       {/* ------------Add Client_Job Modal -------------*/}
       {isOpen && (
         <div className="fixed top-0 left-0 w-full h-screen z-[999] bg-gray-100 flex items-center justify-center py-6  px-4">

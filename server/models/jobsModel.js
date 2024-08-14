@@ -75,13 +75,17 @@ const clientSchema = new mongoose.Schema(
       type: String,
     },
     totalHours: {
-      type: Number,
+      type: String,
     },
     currentDate: {
       type: String,
     },
     source: {
       type: String,
+    },
+    status: {
+      type: String,
+      default: "process",
     },
     clientType: {
       type: String,

@@ -17,6 +17,7 @@ import { AiFillDelete } from "react-icons/ai";
 import { IoClose } from "react-icons/io5";
 import { style } from "../../utlis/CommonStyle";
 import Swal from "sweetalert2";
+import { MdCheckCircle } from "react-icons/md";
 
 export default function JobDetail({
   clientId,
@@ -103,6 +104,40 @@ export default function JobDetail({
     });
   };
 
+  // Update Job Status
+  const updateJobStatus = async () => {
+    try {
+      const { data } = await axios.post(
+        `${process.env.REACT_APP_API_URL}/api/v1/client/dublicate/job/complete`,
+        { ...clientDetail }
+      );
+      if (data) {
+        allClientJobData();
+        toast.success("Status updated!");
+      }
+    } catch (error) {
+      console.error("Error updating complete status", error);
+      toast.error(error.response.data.message);
+    }
+  };
+
+  const handleUpdateStatus = () => {
+    Swal.fire({
+      title: "Are you sure?",
+      text: "You won't be able to revert this job!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, complete it!",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        updateJobStatus();
+        Swal.fire("Updated!", "Your job completed successfully!.", "success");
+      }
+    });
+  };
+
   return (
     <>
       {loading ? (
@@ -119,6 +154,15 @@ export default function JobDetail({
               }}
             >
               <FaEdit className="h-5 w-5 cursor-pointer text-gray-800 hover:text-gray-950" />
+            </span>
+            <span
+              className=""
+              title="Complete Job"
+              onClick={() => {
+                handleUpdateStatus();
+              }}
+            >
+              <MdCheckCircle className="h-6 w-6 cursor-pointer text-green-500 hover:text-green-600" />
             </span>
             <span
               className=""

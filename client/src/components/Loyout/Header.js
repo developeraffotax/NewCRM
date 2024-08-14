@@ -322,29 +322,30 @@ export default function Header() {
                   <div className="w-[350px] min-h-[40vh] max-h-[60vh]  overflow-y-scroll   ">
                     {notificationData &&
                       notificationData?.map((item, index) => (
-                        <Link
-                          to={item?.redirectLink}
-                          key={item?._id}
-                          onClick={() => setFilterId(item?.taskId)}
-                        >
-                          <div className="dark:bg-[#2d3a4ea1] cursor-pointer bg-[#00000013] hover:bg-gray-300 transition-all duration-200 font-Poppins border-b dark:border-b-[#ffffff47] border-b-[#fff]">
-                            <div className="w-full flex items-center justify-between p-2">
-                              <p className="text-black ">{item?.title}</p>
-                              <p
-                                className="text-sky-500 hover:text-sky-600 text-[14px] transition-all duration-200  cursor-pointer"
-                                onClick={() => updateNotification(item._id)}
-                              >
-                                Mark as read
-                              </p>
-                            </div>
+                        <div className="dark:bg-[#2d3a4ea1] bg-[#00000013] hover:bg-gray-300 transition-all duration-200 font-Poppins border-b dark:border-b-[#ffffff47] border-b-[#fff]">
+                          <div className="w-full flex items-center justify-between p-2">
+                            <p className="text-black ">{item?.title}</p>
+                            <p
+                              className="text-sky-500 hover:text-sky-600 text-[14px] transition-all duration-200  cursor-pointer"
+                              onClick={() => updateNotification(item._id)}
+                            >
+                              Mark as read
+                            </p>
+                          </div>
+                          <Link
+                            to={item?.redirectLink}
+                            key={item?._id}
+                            onClick={() => setFilterId(item?.taskId)}
+                            className="cursor-pointer"
+                          >
                             <p className="p-2 text-gray-700  text-[14px]">
                               {item?.description}
                             </p>
                             <p className="p-2 text-black  text-[14px] ">
                               {format(item?.createdAt)}
                             </p>
-                          </div>
-                        </Link>
+                          </Link>
+                        </div>
                       ))}
 
                     {notificationData.length === 0 && (
