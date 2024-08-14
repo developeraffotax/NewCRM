@@ -1156,7 +1156,7 @@ export default function AllJobs() {
                 <Loader />
               </div>
             ) : (
-              <div className="w-full min-h-screen relative">
+              <div className="w-full min-h-[70vh] relative">
                 <div className="h-full hidden1 overflow-y-scroll relative">
                   <MaterialReactTable table={table} />
                 </div>
