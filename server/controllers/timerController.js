@@ -124,14 +124,15 @@ export const totalTime = async (req, res) => {
     const totalTimeInSeconds = (endTime - startTime) / 1000;
 
     let responseMessage;
-    if (totalTimeInSeconds < 60) {
-      responseMessage = `${totalTimeInSeconds.toFixed(1)} s`;
-    } else if (totalTimeInSeconds < 3600) {
+    // if (totalTimeInSeconds < 60) {
+    //   responseMessage = `${totalTimeInSeconds.toFixed(0)} s`;
+    // } else
+    if (totalTimeInSeconds < 3600) {
       const totalTimeInMinutes = totalTimeInSeconds / 60;
-      responseMessage = `${totalTimeInMinutes.toFixed(1)} m`;
+      responseMessage = `${totalTimeInMinutes.toFixed(0)} m`;
     } else {
       const totalTimeInHours = totalTimeInSeconds / 3600;
-      responseMessage = `${totalTimeInHours.toFixed(1)} h`;
+      responseMessage = `${totalTimeInHours.toFixed(0)} h`;
     }
     // Update Time in Job
     const job = await jobsModel.findById(jobId);

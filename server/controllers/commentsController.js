@@ -7,6 +7,8 @@ export const createComment = async (req, res) => {
   try {
     const { comment, jobId, jobHolder } = req.body;
 
+    console.log("Data:", { comment, jobId, jobHolder });
+
     const job = await jobsModel.findById(jobId);
     if (!job) {
       return res.status(400).send({

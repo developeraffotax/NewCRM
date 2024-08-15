@@ -25,10 +25,29 @@ import { Timer } from "../../utlis/Timer";
 import JobCommentModal from "./JobCommentModal";
 import { MdAutoGraph } from "react-icons/md";
 import { useLocation } from "react-router-dom";
+import { TbLoader } from "react-icons/tb";
+import { Box, Button } from "@mui/material";
+import FileDownloadIcon from "@mui/icons-material/FileDownload";
+import { mkConfig, generateCsv, download } from "export-to-csv";
+
 import socketIO from "socket.io-client";
 import CompletedJobs from "./CompletedJobs";
 const ENDPOINT = process.env.REACT_APP_SOCKET_ENDPOINT || "";
 const socketId = socketIO(ENDPOINT, { transports: ["websocket"] });
+
+// CSV Configuration
+const csvConfig = mkConfig({
+  filename: "full_table_data",
+  fieldSeparator: ",",
+  quoteStrings: '"',
+  decimalSeparator: ".",
+  showLabels: true,
+  showTitle: true,
+  title: "Exported Jobs Table Data",
+  useTextFile: false,
+  useBom: true,
+  useKeysAsHeaders: true,
+});
 
 export default function AllJobs() {
   const { auth, filterId, setFilterId } = useAuth();
@@ -56,7 +75,7 @@ export default function AllJobs() {
   const location = useLocation();
   const [showCompleted, setShowCompleted] = useState(false);
   const [totalHours, setTotalHours] = useState("0");
-  console.log("Total Hours:", totalHours);
+  const [fLoading, setFLoading] = useState(false);
 
   // Extract the current path
   const currentPath = location.pathname;
@@ -83,6 +102,34 @@ export default function AllJobs() {
     "Billing",
     "Feedback",
   ];
+
+  // ---------------All Client_Job Data----------->
+  const allClientJobData = async () => {
+    setLoading(true);
+    try {
+      const { data } = await axios.get(
+        `${process.env.REACT_APP_API_URL}/api/v1/client/all/client/job`
+      );
+      if (data) {
+        setTableData(data?.clients);
+        const totalHours = data.clients.reduce(
+          (sum, client) => sum + Number(client.totalHours),
+          0
+        );
+        setTotalHours(totalHours.toFixed(2));
+        setLoading(false);
+      }
+    } catch (error) {
+      setLoading(false);
+      console.log(error);
+      toast.error(error?.response?.data?.message || "Error in client Jobs");
+    }
+  };
+
+  useEffect(() => {
+    allClientJobData();
+    // eslint-disable-next-line
+  }, []);
 
   // ---------Stop Timer ----------->
   const handleStopTimer = () => {
@@ -189,52 +236,21 @@ export default function AllJobs() {
     setFilterData([...filteredData]);
   };
 
-  // Get All Users
+  //---------- Get All Users-----------
   const getAllUsers = async () => {
     try {
-      setLoading(true);
       const { data } = await axios.get(
         `${process.env.REACT_APP_API_URL}/api/v1/user/get_all/users`
       );
       setUsers(data?.users.map((user) => user.name));
-      setLoading(false);
     } catch (error) {
       console.log(error);
-      setLoading(false);
     }
   };
 
   useEffect(() => {
     getAllUsers();
 
-    // eslint-disable-next-line
-  }, []);
-
-  // ---------------All Client_Job Data----------->
-  const allClientJobData = async () => {
-    setLoading(true);
-    try {
-      const { data } = await axios.get(
-        `${process.env.REACT_APP_API_URL}/api/v1/client/all/client/job`
-      );
-      if (data) {
-        setTableData(data?.clients);
-        const totalHours = data.clients.reduce(
-          (sum, client) => sum + Number(client.totalHours),
-          0
-        );
-        setTotalHours(totalHours.toFixed(2));
-        setLoading(false);
-      }
-    } catch (error) {
-      setLoading(false);
-      console.log(error);
-      toast.error(error?.response?.data?.message || "Error in client Jobs");
-    }
-  };
-
-  useEffect(() => {
-    allClientJobData();
     // eslint-disable-next-line
   }, []);
 
@@ -395,6 +411,67 @@ export default function AllJobs() {
       toast.error(error?.response?.data?.message);
     }
   };
+
+  // --------------Import Job data------------>
+  const importJobData = async (file) => {
+    setFLoading(true);
+    if (!file) {
+      toast.error("File is required!");
+      setFLoading(false);
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const { data } = await axios.post(
+        `${process.env.REACT_APP_API_URL}/api/v1/client/import/data`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      if (data) {
+        allClientJobData();
+        toast.success("Job Data imported successfully!");
+      }
+    } catch (error) {
+      console.error("Error importing data:", error);
+      toast.error(
+        error?.response?.data?.message || "Failed to import job data"
+      );
+    } finally {
+      setFLoading(false);
+    }
+  };
+
+  const flattenData = (data) => {
+    return data.map((row) => ({
+      clientName: row.clientName,
+      companyName: row.companyName,
+      email: row.email,
+      currentDate: row.currentDate,
+      totalHours: row.totalHours,
+      totalTime: row.totalTime,
+      jobName: row.job?.jobName || "",
+      yearEnd: row.job?.yearEnd || "",
+      jobDeadline: row.job?.jobDeadline || "",
+      workDeadline: row.job?.workDeadline || "",
+      jobStatus: row.job?.jobStatus || "",
+      lead: row.job?.lead || "",
+      jobHolder: row.job?.jobHolder || "",
+    }));
+  };
+
+  const handleExportData = () => {
+    const csvData = flattenData(tableData);
+    const csv = generateCsv(csvConfig)(csvData);
+    download(csvConfig)(csv);
+  };
+
   //  --------------Table Columns Data--------->
   const columns = useMemo(
     () => [
@@ -478,7 +555,7 @@ export default function AllJobs() {
       },
       {
         accessorKey: "totalHours",
-        header: "Hours",
+        header: "Hrs",
         filterFn: "equals",
         size: 50,
       },
@@ -869,7 +946,7 @@ export default function AllJobs() {
               <span className="text-[1rem] cursor-pointer">
                 <MdInsertComment className="h-5 w-5 text-orange-600 " />
               </span>
-              <span>({comments?.length})</span>
+              {comments?.length > 0 && <span>({comments?.length})</span>}
             </div>
           );
         },
@@ -934,6 +1011,21 @@ export default function AllJobs() {
         },
       },
     },
+
+    renderTopToolbarCustomActions: ({ table }) => (
+      <Box
+        sx={{
+          display: "flex",
+          gap: "16px",
+          padding: "8px",
+          flexWrap: "wrap",
+        }}
+      >
+        <Button onClick={handleExportData} startIcon={<FileDownloadIcon />}>
+          Export
+        </Button>
+      </Box>
+    ),
   });
 
   return (
@@ -950,12 +1042,41 @@ export default function AllJobs() {
               )}
             </span>
           </div>
-          <button
-            className={`${style.button1} text-[15px] `}
-            onClick={() => setIsOpen(true)}
-          >
-            Add Client
-          </button>
+
+          <div className="flex items-center gap-6">
+            <form>
+              <input
+                type="file"
+                name="file"
+                onChange={(e) => importJobData(e.target.files[0])}
+                accept=".csv, .xlsx"
+                id="importJobs"
+                className="hidden"
+              />
+              <label
+                htmlFor="importJobs"
+                className={`${style.button1} text-[15px] ${
+                  fLoading ? "cursor-not-allowed opacity-90" : ""
+                }`}
+                style={{ padding: ".4rem 1.1rem" }}
+                title={"Import csv or excel file!"}
+                onClick={(e) => fLoading && e.preventDefault()}
+              >
+                {fLoading ? (
+                  <TbLoader className="h-6 w-6 animate-spin text-white" />
+                ) : (
+                  "Import"
+                )}
+              </label>
+            </form>
+            <button
+              className={`${style.button1} text-[15px] `}
+              onClick={() => setIsOpen(true)}
+              style={{ padding: ".4rem 1rem" }}
+            >
+              Add Client
+            </button>
+          </div>
         </div>
         {/*  */}
 
@@ -1160,7 +1281,7 @@ export default function AllJobs() {
                 <div className="h-full hidden1 overflow-y-scroll relative">
                   <MaterialReactTable table={table} />
                 </div>
-                <span className="absolute bottom-4 left-4 z-10 font-semibold text-[15px] text-gray-900">
+                <span className="absolute bottom-4 left-[32%] z-10 font-semibold text-[15px] text-gray-900">
                   Total Hours: {totalHours}
                 </span>
               </div>

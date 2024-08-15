@@ -1,7 +1,7 @@
 import jobsModel from "../models/jobsModel.js";
 import notificationModel from "../models/notificationModel.js";
 import userModel from "../models/userModel.js";
-
+import XLSX from "xlsx";
 
 // Create Job
 export const createJob = async (req, res) => {
@@ -90,6 +90,9 @@ export const getAllClients = async (req, res) => {
   try {
     const clients = await jobsModel
       .find({ status: { $ne: "completed" } })
+      .select(
+        "clientName companyName email currentDate totalHours totalTime job.jobName job.yearEnd job.jobDeadline job.workDeadline job.jobStatus job.lead job.jobHolder comments._id"
+      )
       .sort({ updatedAt: -1 });
 
     res.status(200).send({
@@ -705,3 +708,64 @@ export const updateClientStatus = async (req, res) => {
     });
   }
 };
+
+// Function to parse Excel/CSV data
+const parseData = (buffer) => {
+  const workbook = XLSX.read(buffer, { type: "buffer" });
+  const sheetName = workbook.SheetNames[0];
+  const sheet = workbook.Sheets[sheetName];
+  return XLSX.utils.sheet_to_json(sheet);
+};
+
+// Controller to handle file upload
+export const importData = async (req, res) => {
+  try {
+    const file = req.file;
+    if (!file) {
+      return res.status(400).send("No file uploaded.");
+    }
+
+    const data = parseData(file.buffer);
+
+    const clients = data.map((job) => ({
+      clientName: job.clientName || "",
+      regNumber: job.regNumber || "",
+      companyName: job.companyName || "",
+      email: job.email || "",
+      totalHours: job.totalHours || "",
+      currentDate: job.currentDate ? new Date(job.currentDate) : null,
+      source: job.source || "",
+      clientType: job.clientType || "",
+      country: job.country || "",
+      fee: job.fee || "",
+      ctLogin: job.ctLogin || "",
+      pyeLogin: job.pyeLogin || "",
+      trLogin: job.trLogin || "",
+      vatLogin: job.vatLogin || "",
+      authCode: job.authCode || "",
+      utr: job.utr || "",
+      job: {
+        jobName: job.jobName || "",
+        yearEnd: job.yearEnd ? new Date(job.yearEnd) : null,
+        jobDeadline: job.jobDeadline ? new Date(job.jobDeadline) : null,
+        workDeadline: job.workDeadline ? new Date(job.workDeadline) : null,
+        hours: job.jhours || "",
+        fee: job.jfee || "",
+        jobStatus: job.jobStatus || "",
+        lead: job.lead || "",
+        jobHolder: job.jobHolder || "",
+      },
+    }));
+
+    await jobsModel.insertMany(clients);
+    res.status(200).send({
+      success: true,
+      message: "Data imported successfully!",
+    });
+  } catch (error) {
+    console.error("Error importing data:", error);
+    res.status(500).send("An error occurred while importing data.");
+  }
+};
+
+// Delete

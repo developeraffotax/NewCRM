@@ -6,6 +6,7 @@ import {
   getAllClients,
   getClientJobs,
   getClientWithJobs,
+  importData,
   singleClientComments,
   singleClientJob,
   updateClientJob,
@@ -16,6 +17,10 @@ import {
   updateStatus,
 } from "../controllers/jobController.js";
 import { isAdmin, requiredSignIn } from "../middlewares/authMiddleware.js";
+import multer from "multer";
+// Configure multer for file upload
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
 
 const router = express.Router();
 
@@ -58,8 +63,9 @@ router.get("/jobs/status/complete", getClientJobs);
 // Create Dublicate Job (Completed)
 router.post("/dublicate/job/complete", requiredSignIn, createDublicateJob);
 
-
 // Update Client Status
 router.put("/update/client/status/:id", requiredSignIn, updateClientStatus);
+
+router.post("/import/data", upload.single("file"), requiredSignIn, importData);
 
 export default router;

@@ -253,7 +253,7 @@ export default function Header() {
               </div>
 
               {showTimerStatus && (
-                <div className="w-[350px] min-h-[20vh] max-h-[60vh]  overflow-y-auto border border-gray-300  pb-2 shadow-xl  bg-gray-100 absolute z-[999] top-[2rem] right-[1.6rem] rounded">
+                <div className="w-[370px] min-h-[20vh] max-h-[60vh]  overflow-y-auto border border-gray-300  pb-2 shadow-xl  bg-gray-100 absolute z-[999] top-[2rem] right-[1.6rem] rounded">
                   <h5 className="text-[20px] bg-orange-400 text-center font-medium flex items-center justify-center text-white  p-2 font-Poppins">
                     <IoIosTimer
                       className={`h-9 w-9 text-sky-500  ${

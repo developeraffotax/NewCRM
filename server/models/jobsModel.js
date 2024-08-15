@@ -121,7 +121,7 @@ const clientSchema = new mongoose.Schema(
     job: jobSchema,
     totalTime: {
       type: String,
-      default: "O s",
+      default: "O m",
     },
     comments: [commentsSchema],
   },

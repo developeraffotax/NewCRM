@@ -74,36 +74,6 @@ export const Timer = forwardRef(
 
       return () => clearInterval(intervalId);
     }, [isRunning]);
-    // ---------Timer-----
-    // const intervalIdRef = useRef(null);
-
-    // useEffect(() => {
-    //   if (isRunning) {
-    //     intervalIdRef.current = setInterval(() => {
-    //       setElapsedTime((prevTime) => {
-    //         const newTime = prevTime + 1;
-
-    //         // Format time as hh:mm:ss
-    //         const hours = Math.floor(newTime / 3600)
-    //           .toString()
-    //           .padStart(2, "0");
-    //         const minutes = Math.floor((newTime % 3600) / 60)
-    //           .toString()
-    //           .padStart(2, "0");
-    //         const seconds = (newTime % 60).toString().padStart(2, "0");
-
-    //         // Update the setTime state with formatted time
-    //         setTime(`${hours}:${minutes}:${seconds}`);
-    //         return newTime;
-    //       });
-    //     }, 1000);
-    //   }
-
-    //   return () => {
-    //     clearInterval(intervalIdRef.current);
-    //   };
-    //   // eslint-disable-next-line
-    // }, [isRunning]);
 
     const startTimer = async () => {
       try {

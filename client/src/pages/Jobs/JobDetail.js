@@ -5,7 +5,7 @@ import { GoGoal } from "react-icons/go";
 import { MdDateRange, MdInsertComment } from "react-icons/md";
 import { RiTimerLine } from "react-icons/ri";
 import { format } from "date-fns";
-import { MdOutlineInsertComment } from "react-icons/md";
+// import { MdOutlineInsertComment } from "react-icons/md";
 import Loader from "../../utlis/Loader";
 import { Timer } from "../../utlis/Timer";
 import { useAuth } from "../../context/authContext";
@@ -231,6 +231,10 @@ export default function JobDetail({
                   jobId={clientDetail?._id}
                   setIsShow={setIsShow}
                   note={note}
+                  setNote={setNote}
+                  taskLink={"/job-planning"}
+                  pageName={"Jobs"}
+                  taskName={"Name"}
                 />
               </span>
             </div>
@@ -300,7 +304,11 @@ export default function JobDetail({
                     Client Name
                   </span>
                   <span className="border border-gray-300 text-gray-600 py-2 px-2 rounded-tr-md">
-                    {clientDetail?.clientName}
+                    {clientDetail?.clientName ? (
+                      clientDetail?.clientName
+                    ) : (
+                      <span className="text-red-500">N/A</span>
+                    )}
                   </span>
                 </div>
                 <div className="grid grid-cols-2">
@@ -310,7 +318,11 @@ export default function JobDetail({
 
                   <span className="border border-gray-300 text-gray-600 py-2 px-2">
                     <span className=" py-1 px-5 rounded-[1.5rem] shadow-md bg-cyan-500 text-white">
-                      {clientDetail?.companyName}
+                      {clientDetail?.companyName ? (
+                        clientDetail?.companyName
+                      ) : (
+                        <span className="text-red-500">N/A</span>
+                      )}
                     </span>
                   </span>
                 </div>
@@ -319,7 +331,11 @@ export default function JobDetail({
                     Registeration Name
                   </span>
                   <span className="border border-gray-300 text-gray-600 py-2 px-2 ">
-                    {clientDetail?.regNumber}
+                    {clientDetail?.regNumber ? (
+                      clientDetail?.regNumber
+                    ) : (
+                      <span className="text-red-500">N/A</span>
+                    )}
                   </span>
                 </div>
                 <div className="grid grid-cols-2">
@@ -327,7 +343,11 @@ export default function JobDetail({
                     Email
                   </span>
                   <span className="border border-gray-300 text-gray-600 py-2 px-2 ">
-                    {clientDetail?.email}
+                    {clientDetail?.email ? (
+                      clientDetail?.email
+                    ) : (
+                      <span className="text-red-500">N/A</span>
+                    )}
                   </span>
                 </div>
                 <div className="grid grid-cols-2">
@@ -335,7 +355,11 @@ export default function JobDetail({
                     Hours
                   </span>
                   <span className="border border-gray-300 text-gray-600 py-2 px-2 rounded-br-md ">
-                    {clientDetail?.totalHours}
+                    {clientDetail?.totalHours ? (
+                      clientDetail?.totalHours
+                    ) : (
+                      <span className="text-red-500">N/A</span>
+                    )}
                   </span>
                 </div>
               </div>
@@ -346,7 +370,11 @@ export default function JobDetail({
                     Date
                   </span>
                   <span className="border border-gray-300 text-gray-600 py-2 px-2 rounded-tr-md">
-                    {clientDetail?.currentDate}
+                    {clientDetail?.currentDate ? (
+                      clientDetail?.currentDate
+                    ) : (
+                      <span className="text-red-500">N/A</span>
+                    )}
                   </span>
                 </div>
                 <div className="grid grid-cols-2">
@@ -354,7 +382,11 @@ export default function JobDetail({
                     Source
                   </span>
                   <span className="border border-gray-300 text-gray-600 py-2 px-2">
-                    {clientDetail?.source}
+                    {clientDetail?.source ? (
+                      clientDetail?.source
+                    ) : (
+                      <span className="text-red-500">N/A</span>
+                    )}
                   </span>
                 </div>
                 <div className="grid grid-cols-2">
@@ -362,8 +394,12 @@ export default function JobDetail({
                     Client Type
                   </span>
                   <span className="border border-gray-300 text-gray-600 py-2 px-2  ">
-                    <span className=" py-1 px-5 rounded-[1.5rem] shadow-md bg-pink-600 text-white">
-                      {clientDetail?.clientType}
+                    <span className=" py-1 px-5 rounded-[1.5rem] shadow-md bg-yellow-500 text-white">
+                      {clientDetail?.clientType ? (
+                        clientDetail?.clientType
+                      ) : (
+                        <span className="text-red-500">N/A</span>
+                      )}
                     </span>
                   </span>
                 </div>
@@ -372,7 +408,11 @@ export default function JobDetail({
                     Courtry
                   </span>
                   <span className="border border-gray-300 text-gray-600 py-2 px-2 ">
-                    {clientDetail?.country}
+                    {clientDetail?.country ? (
+                      clientDetail?.country
+                    ) : (
+                      <span className="text-red-500">N/A</span>
+                    )}
                   </span>
                 </div>
                 <div className="grid grid-cols-2">
@@ -380,7 +420,11 @@ export default function JobDetail({
                     Fee
                   </span>
                   <span className="border border-gray-300 text-gray-600 py-2 px-2 rounded-br-md ">
-                    {clientDetail?.fee}
+                    {clientDetail?.fee ? (
+                      clientDetail?.fee
+                    ) : (
+                      <span className="text-red-500">N/A</span>
+                    )}
                   </span>
                 </div>
               </div>
@@ -391,7 +435,11 @@ export default function JobDetail({
                     CT Login
                   </span>
                   <span className="border border-gray-300 text-gray-600 py-2 px-2 rounded-tr-md">
-                    {clientDetail?.ctLogin}
+                    {clientDetail?.ctLogin ? (
+                      clientDetail?.ctLogin
+                    ) : (
+                      <span className="text-red-500">N/A</span>
+                    )}
                   </span>
                 </div>
                 <div className="grid grid-cols-2">
@@ -399,7 +447,11 @@ export default function JobDetail({
                     PYE Login
                   </span>
                   <span className="border border-gray-300 text-gray-600 py-2 px-2">
-                    {clientDetail?.pyeLogin}
+                    {clientDetail?.pyeLogin ? (
+                      clientDetail?.pyeLogin
+                    ) : (
+                      <span className="text-red-500">N/A</span>
+                    )}
                   </span>
                 </div>
                 <div className="grid grid-cols-2">
@@ -407,7 +459,11 @@ export default function JobDetail({
                     TR Login
                   </span>
                   <span className="border border-gray-300 text-gray-600 py-2 px-2  ">
-                    {clientDetail?.trLogin}
+                    {clientDetail?.trLogin ? (
+                      clientDetail?.trLogin
+                    ) : (
+                      <span className="text-red-500">N/A</span>
+                    )}
                   </span>
                 </div>
                 <div className="grid grid-cols-2">
@@ -415,7 +471,11 @@ export default function JobDetail({
                     VAT Login
                   </span>
                   <span className="border border-gray-300 text-gray-600 py-2 px-2 ">
-                    {clientDetail?.vatLogin}
+                    {clientDetail?.vatLogin ? (
+                      clientDetail?.vatLogin
+                    ) : (
+                      <span className="text-red-500">N/A</span>
+                    )}
                   </span>
                 </div>
                 <div className="grid grid-cols-2">
@@ -424,7 +484,11 @@ export default function JobDetail({
                   </span>
                   <span className="border border-gray-300 text-gray-600 py-2 px-2 ">
                     <span className=" py-1 px-5 rounded-[1.5rem] shadow-md bg-teal-500 text-white">
-                      {clientDetail?.authCode}
+                      {clientDetail?.authCode ? (
+                        clientDetail?.authCode
+                      ) : (
+                        <span className="text-red-500">N/A</span>
+                      )}
                     </span>
                   </span>
                 </div>
@@ -433,7 +497,11 @@ export default function JobDetail({
                     UTR
                   </span>
                   <span className="border border-gray-300 text-gray-600 py-2 px-2 rounded-br-md ">
-                    {clientDetail?.utr}
+                    {clientDetail?.utr ? (
+                      clientDetail?.utr
+                    ) : (
+                      <span className="text-red-500">N/A</span>
+                    )}
                   </span>
                 </div>
               </div>
@@ -445,7 +513,11 @@ export default function JobDetail({
                   </span>
                   <span className="border border-gray-300 text-gray-600 py-2 px-2 rounded-tr-md">
                     <span className=" py-1 px-5 rounded-[1.5rem] shadow-md bg-indigo-500 text-white">
-                      {clientDetail?.job.jobName}
+                      {clientDetail?.job.jobName ? (
+                        clientDetail?.job.jobName
+                      ) : (
+                        <span className="text-red-500">N/A</span>
+                      )}
                     </span>
                   </span>
                 </div>
@@ -468,12 +540,16 @@ export default function JobDetail({
                     Deadline
                   </span>
                   <span className="border border-gray-300 text-gray-600 py-2 px-2  ">
-                    {format(
-                      new Date(
-                        clientDetail?.job?.jobDeadline ||
-                          "2024-07-26T00:00:00.000+00:00"
-                      ),
-                      "dd-MMM-yyyy"
+                    {clientDetail?.job?.jobDeadline ? (
+                      format(
+                        new Date(
+                          clientDetail?.job?.jobDeadline ||
+                            "2024-07-26T00:00:00.000+00:00"
+                        ),
+                        "dd-MMM-yyyy"
+                      )
+                    ) : (
+                      <span className="text-red-500">N/A</span>
                     )}
                   </span>
                 </div>
@@ -482,12 +558,16 @@ export default function JobDetail({
                     Work Date
                   </span>
                   <span className="border border-gray-300 text-gray-600 py-2 px-2 ">
-                    {format(
-                      new Date(
-                        clientDetail?.job?.workDeadline ||
-                          "2024-07-26T00:00:00.000+00:00"
-                      ),
-                      "dd-MMM-yyyy"
+                    {clientDetail?.job?.workDeadline ? (
+                      format(
+                        new Date(
+                          clientDetail?.job?.workDeadline ||
+                            "2024-07-26T00:00:00.000+00:00"
+                        ),
+                        "dd-MMM-yyyy"
+                      )
+                    ) : (
+                      <span className="text-red-500">N/A</span>
                     )}
                   </span>
                 </div>
@@ -496,7 +576,11 @@ export default function JobDetail({
                     Hours
                   </span>
                   <span className="border border-gray-300 text-gray-600 py-2 px-2  ">
-                    {clientDetail?.job?.hours}
+                    {clientDetail?.job?.hours ? (
+                      clientDetail?.job?.hours
+                    ) : (
+                      <span className="text-red-500">N/A</span>
+                    )}
                   </span>
                 </div>
                 <div className="grid grid-cols-2">
@@ -504,7 +588,11 @@ export default function JobDetail({
                     Fee
                   </span>
                   <span className="border border-gray-300 text-gray-600 py-2 px-2 ">
-                    {clientDetail?.job?.fee}
+                    {clientDetail?.job?.fee ? (
+                      clientDetail?.job?.fee
+                    ) : (
+                      <span className="text-red-500">N/A</span>
+                    )}
                   </span>
                 </div>
                 <div className="grid grid-cols-2">
@@ -512,7 +600,11 @@ export default function JobDetail({
                     Lead
                   </span>
                   <span className="border border-gray-300 text-gray-600 py-2 px-2 ">
-                    {clientDetail?.job?.lead}
+                    {clientDetail?.job?.lead ? (
+                      clientDetail?.job?.lead
+                    ) : (
+                      <span className="text-red-500">N/A</span>
+                    )}
                   </span>
                 </div>
                 <div className="grid grid-cols-2">
@@ -520,7 +612,11 @@ export default function JobDetail({
                     Job Holder
                   </span>
                   <span className="border border-gray-300 text-gray-600 py-2 px-2 rounded-br-md ">
-                    {clientDetail?.job?.jobHolder}
+                    {clientDetail?.job?.jobHolder ? (
+                      clientDetail?.job?.jobHolder
+                    ) : (
+                      <span className="text-red-500">N/A</span>
+                    )}
                   </span>
                 </div>
               </div>

@@ -252,7 +252,7 @@ export default function AllUsers() {
               <div className="w-full h-[85vh]   pb-[4rem] overflow-auto message mt-[1rem] sm:mt-0">
                 <Box
                   m="40px 0 0 0"
-                  height="75vh"
+                  height="80vh"
                   width="98%"
                   boxShadow=".3rem .3rem .4rem rgba(0,0,0,.3)"
                   filter="drop-shadow(0rem 0rem .6rem .1rem rgb(0, 149, 255))"
@@ -312,7 +312,7 @@ export default function AllUsers() {
                     columns={columns}
                     initialState={{
                       pagination: {
-                        paginationModel: { page: 0, pageSize: 6 },
+                        paginationModel: { page: 0, pageSize: 15 },
                       },
                     }}
                     pageSizeOptions={[5, 10, 20, 50]}

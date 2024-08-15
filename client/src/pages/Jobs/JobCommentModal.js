@@ -331,10 +331,12 @@ export default function JobCommentModal({
                       </div>
                       {/* <hr className="w-full h-[1px] bg-gray-300" /> */}
                       {/* M */}
-                      <div className="w-full px-2 py-1 ">
-                        {comment?.comment}
+                      <div className="w-full px-2 py-1  ">
+                        <p className="rounded-lg rounded-tl-none bg-sky-200 py-1 px-2 ml-5">
+                          {comment?.comment}
+                        </p>
                       </div>
-                      {/* <hr className="w-full h-[1px] bg-gray-300" /> */}
+                      <hr className="w-full h-[1px] bg-gray-100" />
                       <div className="flex items-center justify-between px-4 ">
                         <span
                           className="flex items-center cursor-pointer"
@@ -453,7 +455,9 @@ export default function JobCommentModal({
                                 </div>
                                 {/* M */}
                                 <div className="w-full px-2 py-1 ">
-                                  {commentReply?.reply}
+                                  <p className="rounded-lg rounded-tl-none bg-orange-200 py-1 px-2 ml-4">
+                                    {commentReply?.reply}
+                                  </p>
                                 </div>
                               </div>
                             </div>

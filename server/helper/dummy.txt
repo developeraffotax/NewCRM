@@ -35,3 +35,32 @@
     //     jobs,
     //   });
     }
+
+
+    Apply Aggregate 
+     const clients = await jobsModel.aggregate([
+      {
+        $match: { status: { $ne: "completed" } },
+      },
+      {
+        $project: {
+          clientName: 1,
+          companyName: 1,
+          email: 1,
+          currentDate: 1,
+          totalHours: 1,
+          totalTime: 1,
+          "job.jobName": 1,
+          "job.yearEnd": 1,
+          "job.jobDeadline": 1,
+          "job.workDeadline": 1,
+          "job.jobStatus": 1,
+          "job.lead": 1,
+          "job.jobHolder": 1,
+          commentsLength: { $size: "$comments" }, // Get the length of the comments array
+        },
+      },
+      {
+        $sort: { updatedAt: -1 },
+      },
+    ]);
