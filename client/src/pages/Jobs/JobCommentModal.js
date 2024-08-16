@@ -588,6 +588,7 @@ export default function JobCommentModal({
                   className={`${style.btn} ${
                     !comment && "cursor-not-allowed opacity-[.5]"
                   }   ${loading && "cursor-no-drop"} shadow`}
+                  type="submit"
                 >
                   {loading ? (
                     <BiLoaderCircle className="w-5 h-5 animate-spin text-white" />

@@ -139,24 +139,24 @@ export default function Header() {
   };
 
   // Player
-  const notificationPlayer = () => {
-    if (audio) {
-      audio.play().catch((error) => {
-        console.log("Audio play failed: ", error);
-      });
-    }
-  };
+  // const notificationPlayer = () => {
+  //   if (audio) {
+  //     audio.play().catch((error) => {
+  //       console.log("Audio play failed: ", error);
+  //     });
+  //   }
+  // };
 
-  useEffect(() => {
-    getNotifications();
+  // useEffect(() => {
+  //   getNotifications();
 
-    // eslint-disable-next-line
-  }, []);
+  //   // eslint-disable-next-line
+  // }, []);
 
   useEffect(() => {
     socketId.on("newNotification", () => {
       getNotifications();
-      notificationPlayer();
+      // notificationPlayer();
     });
 
     return () => {
@@ -279,13 +279,15 @@ export default function Header() {
                                 {timerStatus?.taskName}
                               </p>
                             </div>
-                            <p className="p-2 text-gray-600 text-[12px] ">
-                              {format(timerStatus?.createdAt)}
-                            </p>
                           </div>
                           {/* <div className="text-[20px] w-full text-orange-600 font-semibold text-center">
                             {time}
                           </div> */}
+                          <div className="w-full flex items-center justify-end">
+                            <p className="p-2 text-gray-600 text-[12px] ">
+                              {format(timerStatus?.createdAt)}
+                            </p>
+                          </div>
                         </div>
                       </div>
                     </Link>

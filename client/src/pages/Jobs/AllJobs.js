@@ -27,7 +27,10 @@ import { MdAutoGraph } from "react-icons/md";
 import { useLocation } from "react-router-dom";
 import { TbLoader } from "react-icons/tb";
 import { Box, Button } from "@mui/material";
-import FileDownloadIcon from "@mui/icons-material/FileDownload";
+import {
+  FileDownload as FileDownloadIcon,
+  Clear as ClearIcon,
+} from "@mui/icons-material";
 import { mkConfig, generateCsv, download } from "export-to-csv";
 
 import socketIO from "socket.io-client";
@@ -116,7 +119,7 @@ export default function AllJobs() {
           (sum, client) => sum + Number(client.totalHours),
           0
         );
-        setTotalHours(totalHours.toFixed(2));
+        setTotalHours(totalHours.toFixed(0));
         setLoading(false);
       }
     } catch (error) {
@@ -130,6 +133,14 @@ export default function AllJobs() {
     allClientJobData();
     // eslint-disable-next-line
   }, []);
+
+  // -----------Handle Custom date filter------
+  const getCurrentMonthYear = () => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = (today.getMonth() + 1).toString().padStart(2, "0");
+    return `${year}-${month}`;
+  };
 
   // ---------Stop Timer ----------->
   const handleStopTimer = () => {
@@ -404,7 +415,7 @@ export default function AllJobs() {
           : { currentDate: date }
       );
       if (data) {
-        toast.success("Date updated successfully!");
+        // toast.success("Date updated successfully!");
       }
     } catch (error) {
       console.log(error);
@@ -452,7 +463,7 @@ export default function AllJobs() {
     return data.map((row) => ({
       clientName: row.clientName,
       companyName: row.companyName,
-      email: row.email,
+      // email: row.email,
       currentDate: row.currentDate,
       totalHours: row.totalHours,
       totalTime: row.totalTime,
@@ -478,7 +489,10 @@ export default function AllJobs() {
       {
         accessorKey: "companyName",
         header: "Company Name",
-        size: 170,
+        minSize: 170,
+        maxSize: 220,
+        size: 210,
+        grow: true,
         Cell: ({ cell, row }) => {
           const companyName = cell.getValue();
 
@@ -557,13 +571,12 @@ export default function AllJobs() {
         accessorKey: "totalHours",
         header: "Hrs",
         filterFn: "equals",
-        size: 50,
+        size: 90,
       },
       // End  year
       {
         accessorKey: "job.yearEnd",
         header: "Year End",
-
         Cell: ({ cell, row }) => {
           const [date, setDate] = useState(
             format(new Date(cell.getValue()), "dd-MMM-yyyy")
@@ -574,14 +587,22 @@ export default function AllJobs() {
             handleUpdateDates(row.original._id, newDate, "yearEnd");
           };
 
+          const cellDate = new Date(date);
+          const today = new Date();
+          const isExpired = cellDate < today;
+
           return (
-            <input
-              type="text"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              onBlur={(e) => handleDateChange(e.target.value)}
-              className="h-[2rem] w-[6rem] cursor-pointer rounded-md border border-gray-200 outline-none"
-            />
+            <div className="w-full flex items-center justify-center">
+              <input
+                type="text"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                onBlur={(e) => handleDateChange(e.target.value)}
+                className={`h-[2rem] w-[6rem] cursor-pointer text-center rounded-md border border-gray-200 outline-none ${
+                  isExpired ? "text-red-500" : ""
+                }`}
+              />
+            </div>
           );
         },
         filterFn: (row, columnId, filterValue) => {
@@ -589,8 +610,29 @@ export default function AllJobs() {
           if (!cellValue) return false;
 
           const cellDate = new Date(cellValue);
-          const today = new Date();
 
+          if (filterValue.includes("-")) {
+            const [year, month] = filterValue.split("-");
+            const cellYear = cellDate.getFullYear().toString();
+            const cellMonth = (cellDate.getMonth() + 1)
+              .toString()
+              .padStart(2, "0");
+
+            // Log for debugging
+            // console.log(
+            //   "Filter Value:",
+            //   filterValue,
+            //   "Cell Year:",
+            //   cellYear,
+            //   "Cell Month:",
+            //   cellMonth
+            // );
+
+            return year === cellYear && month === cellMonth;
+          }
+
+          // Other filter cases
+          const today = new Date();
           switch (filterValue) {
             case "Expired":
               return cellDate < today;
@@ -608,29 +650,83 @@ export default function AllJobs() {
               const in15Days = new Date(today);
               in15Days.setDate(today.getDate() + 15);
               return cellDate <= in15Days && cellDate > today;
-            case "Month Wise":
-              return (
-                cellDate.getFullYear() === today.getFullYear() &&
-                cellDate.getMonth() === today.getMonth()
-              );
+            case "30 Days":
+              const in30Days = new Date(today);
+              in30Days.setDate(today.getDate() + 30);
+              return cellDate <= in30Days && cellDate > today;
+            case "60 Days":
+              const in60Days = new Date(today);
+              in60Days.setDate(today.getDate() + 60);
+              return cellDate <= in60Days && cellDate > today;
+            case "Last 12 months":
+              const lastYear = new Date(today);
+              lastYear.setFullYear(today.getFullYear() - 1);
+              return cellDate >= lastYear && cellDate <= today;
             default:
               return false;
           }
         },
         filterSelectOptions: [
+          "Select",
           "Expired",
           "Today",
           "Tomorrow",
           "In 7 days",
           "In 15 days",
-          "Month Wise",
+          "30 Days",
+          "60 Days",
+          // "Last 12 months",
+          "Custom date",
         ],
-        filterVariant: "select",
+        filterVariant: "custom",
         size: 110,
         minSize: 80,
         maxSize: 140,
         grow: true,
+        Filter: ({ column }) => {
+          const [filterValue, setFilterValue] = useState("Select");
+          const [customDate, setCustomDate] = useState(getCurrentMonthYear());
+
+          useEffect(() => {
+            if (filterValue === "Custom date") {
+              column.setFilterValue(customDate);
+            }
+            //eslint-disable-next-line
+          }, [customDate, filterValue]);
+
+          const handleFilterChange = (e) => {
+            setFilterValue(e.target.value);
+            column.setFilterValue(e.target.value);
+          };
+
+          const handleCustomDateChange = (e) => {
+            setCustomDate(e.target.value);
+            column.setFilterValue(e.target.value);
+          };
+
+          return filterValue === "Custom date" ? (
+            <input
+              type="month"
+              value={customDate}
+              onChange={handleCustomDateChange}
+              className="h-[2rem] w-[9rem] cursor-pointer text-center rounded-md border border-gray-200 outline-none"
+            />
+          ) : (
+            <select
+              value={filterValue}
+              onChange={handleFilterChange}
+              className="h-[2rem] w-[9rem] cursor-pointer text-center rounded-md border border-gray-200 outline-none"
+            >
+              {column.columnDef.filterSelectOptions.map((option, idx) => (
+                <option key={idx} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          );
+        },
       },
+
       // Job DeadLine
       {
         accessorKey: "job.jobDeadline",
@@ -642,18 +738,25 @@ export default function AllJobs() {
 
           const handleDateChange = (newDate) => {
             setDate(newDate);
-            handleUpdateDates(row.original._id, newDate, "jobDeadline");
+            handleUpdateDates(row.original._id, newDate, "yearEnd");
           };
 
+          const cellDate = new Date(date);
+          const today = new Date();
+          const isExpired = cellDate < today;
+
           return (
-            <input
-              type="text"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              onBlur={(e) => handleDateChange(e.target.value)}
-              className=" h-[2rem] w-[6rem]
-               cursor-pointer rounded-md border border-gray-200  outline-none"
-            />
+            <div className="w-full flex items-center justify-center">
+              <input
+                type="text"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                onBlur={(e) => handleDateChange(e.target.value)}
+                className={`h-[2rem] w-[6rem] cursor-pointer text-center rounded-md border border-gray-200 outline-none ${
+                  isExpired ? "text-red-500" : ""
+                }`}
+              />
+            </div>
           );
         },
         filterFn: (row, columnId, filterValue) => {
@@ -661,8 +764,19 @@ export default function AllJobs() {
           if (!cellValue) return false;
 
           const cellDate = new Date(cellValue);
-          const today = new Date();
 
+          if (filterValue.includes("-")) {
+            const [year, month] = filterValue.split("-");
+            const cellYear = cellDate.getFullYear().toString();
+            const cellMonth = (cellDate.getMonth() + 1)
+              .toString()
+              .padStart(2, "0");
+
+            return year === cellYear && month === cellMonth;
+          }
+
+          // Other filter cases
+          const today = new Date();
           switch (filterValue) {
             case "Expired":
               return cellDate < today;
@@ -680,29 +794,83 @@ export default function AllJobs() {
               const in15Days = new Date(today);
               in15Days.setDate(today.getDate() + 15);
               return cellDate <= in15Days && cellDate > today;
-            case "Month Wise":
-              return (
-                cellDate.getFullYear() === today.getFullYear() &&
-                cellDate.getMonth() === today.getMonth()
-              );
+            case "30 Days":
+              const in30Days = new Date(today);
+              in30Days.setDate(today.getDate() + 30);
+              return cellDate <= in30Days && cellDate > today;
+            case "60 Days":
+              const in60Days = new Date(today);
+              in60Days.setDate(today.getDate() + 60);
+              return cellDate <= in60Days && cellDate > today;
+            case "Last 12 months":
+              const lastYear = new Date(today);
+              lastYear.setFullYear(today.getFullYear() - 1);
+              return cellDate >= lastYear && cellDate <= today;
             default:
               return false;
           }
         },
         filterSelectOptions: [
+          "Select",
           "Expired",
           "Today",
           "Tomorrow",
           "In 7 days",
           "In 15 days",
-          "Month Wise",
+          "30 Days",
+          "60 Days",
+          // "Last 12 months",
+          "Custom date",
         ],
-        filterVariant: "select",
+        filterVariant: "custom",
         size: 110,
         minSize: 80,
         maxSize: 140,
         grow: true,
+        Filter: ({ column }) => {
+          const [filterValue, setFilterValue] = useState("Select");
+          const [customDate, setCustomDate] = useState(getCurrentMonthYear());
+
+          useEffect(() => {
+            if (filterValue === "Custom date") {
+              column.setFilterValue(customDate);
+            }
+            //eslint-disable-next-line
+          }, [customDate, filterValue]);
+
+          const handleFilterChange = (e) => {
+            setFilterValue(e.target.value);
+            column.setFilterValue(e.target.value);
+          };
+
+          const handleCustomDateChange = (e) => {
+            setCustomDate(e.target.value);
+            column.setFilterValue(e.target.value);
+          };
+
+          return filterValue === "Custom date" ? (
+            <input
+              type="month"
+              value={customDate}
+              onChange={handleCustomDateChange}
+              className="h-[2rem] w-[9rem] cursor-pointer text-center rounded-md border border-gray-200 outline-none"
+            />
+          ) : (
+            <select
+              value={filterValue}
+              onChange={handleFilterChange}
+              className="h-[2rem] w-[9rem] cursor-pointer text-center rounded-md border border-gray-200 outline-none"
+            >
+              {column.columnDef.filterSelectOptions.map((option, idx) => (
+                <option key={idx} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          );
+        },
       },
+
       //  Current Date
       {
         accessorKey: "currentDate",
@@ -718,14 +886,15 @@ export default function AllJobs() {
           };
 
           return (
-            <input
-              type="text"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              onBlur={(e) => handleDateChange(e.target.value)}
-              className=" h-[2rem] w-[6rem]
-               cursor-pointer rounded-md border border-gray-200  outline-none"
-            />
+            <div className="w-full flex items-center justify-center">
+              <input
+                type="text"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                onBlur={(e) => handleDateChange(e.target.value)}
+                className={`h-[2rem] w-[6rem] cursor-pointer text-center rounded-md border border-gray-200 outline-none `}
+              />
+            </div>
           );
         },
         filterFn: (row, columnId, filterValue) => {
@@ -752,6 +921,18 @@ export default function AllJobs() {
               const in15Days = new Date(today);
               in15Days.setDate(today.getDate() + 15);
               return cellDate <= in15Days && cellDate > today;
+            case "30 Days":
+              const in30Days = new Date(today);
+              in30Days.setDate(today.getDate() + 30);
+              return cellDate <= in30Days && cellDate > today;
+            case "60 Days":
+              const in60Days = new Date(today);
+              in60Days.setDate(today.getDate() + 60);
+              return cellDate <= in60Days && cellDate > today;
+            case "Last 12 months":
+              const lastYear = new Date(today);
+              lastYear.setFullYear(today.getFullYear() - 1);
+              return cellDate >= lastYear && cellDate <= today;
             case "Month Wise":
               return (
                 cellDate.getFullYear() === today.getFullYear() &&
@@ -767,7 +948,10 @@ export default function AllJobs() {
           "Tomorrow",
           "In 7 days",
           "In 15 days",
-          "Month Wise",
+          "30 Days",
+          "60 Days",
+          "Last 12 months",
+          // "Custom Date",
         ],
         filterVariant: "select",
         size: 110,
@@ -1012,20 +1196,34 @@ export default function AllJobs() {
       },
     },
 
-    renderTopToolbarCustomActions: ({ table }) => (
-      <Box
-        sx={{
-          display: "flex",
-          gap: "16px",
-          padding: "8px",
-          flexWrap: "wrap",
-        }}
-      >
-        <Button onClick={handleExportData} startIcon={<FileDownloadIcon />}>
-          Export
-        </Button>
-      </Box>
-    ),
+    renderTopToolbarCustomActions: ({ table }) => {
+      const handleClearFilters = () => {
+        table.setColumnFilters([]);
+        table.setGlobalFilter("");
+      };
+
+      return (
+        <Box
+          sx={{
+            display: "flex",
+            gap: "7px",
+            padding: "2px",
+            flexWrap: "wrap",
+          }}
+        >
+          <Button
+            onClick={handleExportData}
+            startIcon={<FileDownloadIcon />}
+            className="w-[3rem]"
+          ></Button>
+          <Button
+            onClick={handleClearFilters}
+            startIcon={<ClearIcon />}
+            className="w-[3rem]"
+          ></Button>
+        </Box>
+      );
+    },
   });
 
   return (
@@ -1043,7 +1241,7 @@ export default function AllJobs() {
             </span>
           </div>
 
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-4">
             <form>
               <input
                 type="file"
@@ -1055,7 +1253,9 @@ export default function AllJobs() {
               />
               <label
                 htmlFor="importJobs"
-                className={`${style.button1} text-[15px] ${
+                className={`${
+                  style.button1
+                } !bg-gray-300 !shadow-none hover:bg-orange-500 text-[15px] ${
                   fLoading ? "cursor-not-allowed opacity-90" : ""
                 }`}
                 style={{ padding: ".4rem 1.1rem" }}
@@ -1281,8 +1481,8 @@ export default function AllJobs() {
                 <div className="h-full hidden1 overflow-y-scroll relative">
                   <MaterialReactTable table={table} />
                 </div>
-                <span className="absolute bottom-4 left-[32%] z-10 font-semibold text-[15px] text-gray-900">
-                  Total Hours: {totalHours}
+                <span className="absolute bottom-4 left-[31.5%] z-10 font-semibold text-[15px] text-gray-900">
+                  Total Hrs: {totalHours}
                 </span>
               </div>
             )}

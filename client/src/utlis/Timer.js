@@ -48,7 +48,7 @@ export const Timer = forwardRef(
             setElapsedTime(timeElapsed);
           }
         } catch (error) {
-          console.error("Error fetching timer status:", error);
+          console.error(error);
         }
       };
 

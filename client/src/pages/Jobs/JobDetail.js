@@ -317,7 +317,11 @@ export default function JobDetail({
                   </span>
 
                   <span className="border border-gray-300 text-gray-600 py-2 px-2">
-                    <span className=" py-1 px-5 rounded-[1.5rem] shadow-md bg-cyan-500 text-white">
+                    <span
+                      className={` py-1 px-3 rounded-[1.5rem] ${
+                        clientDetail?.companyName.length > 25 && "text-[14px]"
+                      }  w-full shadow-md bg-cyan-500 text-white`}
+                    >
                       {clientDetail?.companyName ? (
                         clientDetail?.companyName
                       ) : (

@@ -255,3 +255,195 @@
       },
     },
   });
+
+  ------------Date--------
+    {
+        accessorKey: "job.jobDeadline",
+        header: "Deadline",
+
+        Cell: ({ cell, row }) => {
+          const [date, setDate] = useState(
+            format(new Date(cell.getValue()), "dd-MMM-yyyy")
+          );
+
+          const handleDateChange = (newDate) => {
+            setDate(newDate);
+            handleUpdateDates(row.original._id, newDate, "yearEnd");
+          };
+          //  cell.getValue()
+          const cellDate = new Date(date);
+          const today = new Date();
+          const isExpired = cellDate < today;
+
+          return (
+            <div className="w-full flex items-center justify-center">
+              <input
+                type="text"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                onBlur={(e) => handleDateChange(e.target.value)}
+                className={`h-[2rem] w-[6rem] cursor-pointer text-center rounded-md border border-gray-200 outline-none ${
+                  isExpired ? "text-red-500" : ""
+                }`}
+              />
+            </div>
+          );
+        },
+        filterFn: (row, columnId, filterValue) => {
+          const cellValue = row.getValue(columnId);
+          if (!cellValue) return false;
+
+          const cellDate = new Date(cellValue);
+          const today = new Date();
+
+          switch (filterValue) {
+            case "Expired":
+              return cellDate < today;
+            case "Today":
+              return cellDate.toDateString() === today.toDateString();
+            case "Tomorrow":
+              const tomorrow = new Date(today);
+              tomorrow.setDate(today.getDate() + 1);
+              return cellDate.toDateString() === tomorrow.toDateString();
+            case "In 7 days":
+              const in7Days = new Date(today);
+              in7Days.setDate(today.getDate() + 7);
+              return cellDate <= in7Days && cellDate > today;
+            case "In 15 days":
+              const in15Days = new Date(today);
+              in15Days.setDate(today.getDate() + 15);
+              return cellDate <= in15Days && cellDate > today;
+            case "30 Days":
+              const in30Days = new Date(today);
+              in30Days.setDate(today.getDate() + 30);
+              return cellDate <= in30Days && cellDate > today;
+            case "60 Days":
+              const in60Days = new Date(today);
+              in60Days.setDate(today.getDate() + 60);
+              return cellDate <= in60Days && cellDate > today;
+            case "Last 12 months":
+              const lastYear = new Date(today);
+              lastYear.setFullYear(today.getFullYear() - 1);
+              return cellDate >= lastYear && cellDate <= today;
+            case "Month Wise":
+              return (
+                cellDate.getFullYear() === today.getFullYear() &&
+                cellDate.getMonth() === today.getMonth()
+              );
+            default:
+              return false;
+          }
+        },
+        filterSelectOptions: [
+          "Expired",
+          "Today",
+          "Tomorrow",
+          "In 7 days",
+          "In 15 days",
+          "30 Days",
+          "60 Days",
+          "Last 12 months",
+        ],
+        filterVariant: "select",
+        size: 110,
+        minSize: 80,
+        maxSize: 140,
+        grow: true,
+      },
+
+
+      ------------
+      // {
+      //   accessorKey: "job.yearEnd",
+      //   header: "Year End",
+
+      //   Cell: ({ cell, row }) => {
+      //     const [date, setDate] = useState(
+      //       format(new Date(cell.getValue()), "dd-MMM-yyyy")
+      //     );
+
+      //     const handleDateChange = (newDate) => {
+      //       setDate(newDate);
+      //       handleUpdateDates(row.original._id, newDate, "yearEnd");
+      //     };
+      //     //  cell.getValue()
+      //     const cellDate = new Date(date);
+      //     const today = new Date();
+      //     const isExpired = cellDate < today;
+
+      //     return (
+      //       <div className="w-full flex items-center justify-center">
+      //         <input
+      //           type="text"
+      //           value={date}
+      //           onChange={(e) => setDate(e.target.value)}
+      //           onBlur={(e) => handleDateChange(e.target.value)}
+      //           className={`h-[2rem] w-[6rem] cursor-pointer text-center rounded-md border border-gray-200 outline-none ${
+      //             isExpired ? "text-red-500" : ""
+      //           }`}
+      //         />
+      //       </div>
+      //     );
+      //   },
+      //   filterFn: (row, columnId, filterValue) => {
+      //     const cellValue = row.getValue(columnId);
+      //     if (!cellValue) return false;
+
+      //     const cellDate = new Date(cellValue);
+      //     const today = new Date();
+
+      //     switch (filterValue) {
+      //       case "Expired":
+      //         return cellDate < today;
+      //       case "Today":
+      //         return cellDate.toDateString() === today.toDateString();
+      //       case "Tomorrow":
+      //         const tomorrow = new Date(today);
+      //         tomorrow.setDate(today.getDate() + 1);
+      //         return cellDate.toDateString() === tomorrow.toDateString();
+      //       case "In 7 days":
+      //         const in7Days = new Date(today);
+      //         in7Days.setDate(today.getDate() + 7);
+      //         return cellDate <= in7Days && cellDate > today;
+      //       case "In 15 days":
+      //         const in15Days = new Date(today);
+      //         in15Days.setDate(today.getDate() + 15);
+      //         return cellDate <= in15Days && cellDate > today;
+      //       case "30 Days":
+      //         const in30Days = new Date(today);
+      //         in30Days.setDate(today.getDate() + 30);
+      //         return cellDate <= in30Days && cellDate > today;
+      //       case "60 Days":
+      //         const in60Days = new Date(today);
+      //         in60Days.setDate(today.getDate() + 60);
+      //         return cellDate <= in60Days && cellDate > today;
+      //       case "Last 12 months":
+      //         const lastYear = new Date(today);
+      //         lastYear.setFullYear(today.getFullYear() - 1);
+      //         return cellDate >= lastYear && cellDate <= today;
+      //       // case "Month Wise":
+      //       //   return (
+      //       //     cellDate.getFullYear() === today.getFullYear() &&
+      //       //     cellDate.getMonth() === today.getMonth()
+      //       //   );
+      //       default:
+      //         return false;
+      //     }
+      //   },
+      //   filterSelectOptions: [
+      //     "Expired",
+      //     "Today",
+      //     "Tomorrow",
+      //     "In 7 days",
+      //     "In 15 days",
+      //     "30 Days",
+      //     "60 Days",
+      //     "Last 12 months",
+      //     "Custom date",
+      //   ],
+      //   filterVariant: "select",
+      //   size: 110,
+      //   minSize: 80,
+      //   maxSize: 140,
+      //   grow: true,
+      // },

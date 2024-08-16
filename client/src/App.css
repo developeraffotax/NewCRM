@@ -44,6 +44,25 @@
   padding: 8px 12px;
 }
 
+/* Table Export Icons Position Change */
+
+.css-wsew38 {
+  width: 100% !important;
+  box-sizing: border-box;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  /* flex-direction: row-reverse !important; */
+  gap: 0.5rem;
+  padding: 0.5rem;
+  /* color: #ff5b03; */
+}
+.css-1e6y48t-MuiButtonBase-root-MuiButton-root {
+  width: 35px !important;
+  padding: 6px 3px !important;
+  transform: translateX(1rem);
+}
+
 /* Remove date Icon */
 /* input[type="date"]::-webkit-calendar-picker-indicator {
   display: none;
