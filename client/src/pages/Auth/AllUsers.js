@@ -168,6 +168,7 @@ export default function AllUsers() {
           Type: user?.fileType,
           Name: user?.name,
           Email: user?.email,
+          avatar: user?.avatar,
           phone: user?.phone ? user?.phone : "N/A",
           emer_contact: user?.emergency_contact
             ? user?.emergency_contact
@@ -251,7 +252,7 @@ export default function AllUsers() {
               <div className="w-full h-[85vh]   pb-[4rem] overflow-auto message mt-[1rem] sm:mt-0">
                 <Box
                   m="40px 0 0 0"
-                  height="75vh"
+                  height="80vh"
                   width="98%"
                   boxShadow=".3rem .3rem .4rem rgba(0,0,0,.3)"
                   filter="drop-shadow(0rem 0rem .6rem .1rem rgb(0, 149, 255))"
@@ -311,7 +312,7 @@ export default function AllUsers() {
                     columns={columns}
                     initialState={{
                       pagination: {
-                        paginationModel: { page: 0, pageSize: 6 },
+                        paginationModel: { page: 0, pageSize: 15 },
                       },
                     }}
                     pageSizeOptions={[5, 10, 20, 50]}
@@ -412,7 +413,7 @@ export default function AllUsers() {
       </div>
       {/* Add New User */}
       {isOpen && (
-        <div className="fixed top-0 left-0 w-full h-screen z-[999] bg-black/70 flex items-center justify-center py-6 px-4">
+        <div className="fixed top-[4rem] h-screen sm:top-0 left-0 w-full z-[99990] overflow-y-scroll bg-black/70 flex items-center justify-center py-6 px-4">
           <Register
             setIsOpen={setIsOpen}
             getAllUsers={getAllUsers}

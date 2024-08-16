@@ -86,7 +86,7 @@ input::-webkit-inner-spin-button {
 }
 ::-webkit-scrollbar {
   width: 0.2rem;
-  height: 0.1rem;
+  height: 0.3rem;
 }
 ::-webkit-scrollbar-track {
   background: #afadad;
@@ -242,7 +242,7 @@ input::-webkit-inner-spin-button {
 .inputBox > input,
 .inputBox > textarea {
   width: 100%;
-  height: 3rem;
+  height: 2.5rem;
   border: 2px solid #555;
   font-size: 1rem;
   font-weight: 500;
@@ -289,4 +289,16 @@ inputBox > textarea:focus ~ span {
   -webkit-text-fill-color: transparent;
   background-clip: text;
   text-fill-color: transparent;
+}
+
+.mentions {
+  outline: none;
+}
+
+.highlight {
+  background-color: #ffff99;
+  padding: 0 2px;
+  border-radius: 2px;
+  font-weight: 500;
+  color: #007bff;
 }

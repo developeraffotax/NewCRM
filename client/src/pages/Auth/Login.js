@@ -36,7 +36,7 @@ export default function Login() {
       }
     } catch (error) {
       console.log(error);
-      toast.error(error.response.data.message, { duration: 2000 });
+      toast.error(error?.response?.data?.message, { duration: 2000 });
       setLoading(false);
     }
   };
@@ -85,7 +85,7 @@ export default function Login() {
                 className="w-full py-2 px-3 border-2  text-[15px] outline-none border-gray-900 rounded-md shadow-md"
               />
             </div>
-            <div className="flex items-start sm:items-center flex-col sm:flex-row justify-normal sm:justify-between my-3">
+            {/* <div className="flex items-start sm:items-center flex-col sm:flex-row justify-normal sm:justify-between my-3">
               <span
                 type="button"
                 // onClick={() => setRoute("ResetPassword")}
@@ -93,7 +93,7 @@ export default function Login() {
               >
                 Reset Password
               </span>
-            </div>
+            </div> */}
             <button
               type="submit"
               className={`btn ${

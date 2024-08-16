@@ -104,7 +104,8 @@ export default function Register({ setIsOpen, getAllUsers, userId }) {
     //eslint-disable-next-line
   }, [userId]);
   return (
-    <div className="relative w-[40rem] py-4 px-4  bg-white rounded-lg overflow-hidden">
+    <div className="relative w-[40rem] py-4 px-4  bg-white rounded-lg mt-[10rem] sm:mt-0 ">
+      <h1 className="text-2xl font-semibold text-center mb-4">Add User</h1>
       <span
         className="absolute top-3 right-3 cursor-pointer z-10 p-1 rounded-lg bg-white/50 hover:bg-white/70 transition-all duration-150 flex items-center justify-center"
         onClick={() => {
@@ -172,7 +173,7 @@ export default function Register({ setIsOpen, getAllUsers, userId }) {
           </div>
           <div className="flex flex-col gap-1">
             <label htmlFor="" className="text-[1rem] font-[400] ">
-              UserName
+              User Name
             </label>
             <input
               type="text"
