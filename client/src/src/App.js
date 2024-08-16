@@ -7,8 +7,16 @@ import AllJobs from "./pages/Jobs/AllJobs";
 import AllTasks from "./pages/Tasks/AllTasks";
 import AllLists from "./pages/lists/AllLists";
 import AllUsers from "./pages/Auth/AllUsers";
+import Profile from "./pages/Auth/Profile";
+import { useEffect } from "react";
+import socketIO from "socket.io-client";
+const ENDPOINT = process.env.REACT_APP_SOCKET_ENDPOINT || "";
+const socketId = socketIO(ENDPOINT, { transports: ["websocket"] });
 
 function App() {
+  useEffect(() => {
+    socketId.on("connection", () => {});
+  }, []);
   return (
     <div>
       <BrowserRouter>
@@ -19,6 +27,7 @@ function App() {
           <Route path="/tasks" element={<AllTasks />} />
           <Route path="/job-planning" element={<AllJobs />} />
           <Route path="/users" element={<AllUsers />} />
+          <Route path="/profile" element={<Profile />} />
         </Routes>
         <Toaster />
       </BrowserRouter>

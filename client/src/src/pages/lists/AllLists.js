@@ -1,10 +1,10 @@
 import React from "react";
 import Layout from "../../components/Loyout/Layout";
 
-export default function AllTasks() {
+export default function AllLists() {
   return (
     <Layout>
-      <div>AllTasks</div>
+      <div>AllLists</div>
     </Layout>
   );
 }

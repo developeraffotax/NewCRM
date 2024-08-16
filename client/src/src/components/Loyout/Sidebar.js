@@ -54,30 +54,6 @@ export default function Sidebar({ hide, setHide }) {
           />
         )}
       </div>
-      {/* Profile */}
-      <div className="relative flex items-center justify-center flex-col gap-2 ">
-        <div
-          className={`relative ${
-            hide ? "w-[3rem] h-[3rem]" : "w-[4rem] h-[4rem]"
-          } rounded-full object-fill overflow-hidden mt-2 border-[2px]  cursor-pointer ${
-            isActive ? "border-orange-600" : "border-gray-300"
-          } active:scale-[1.03] select-none`}
-        >
-          <img
-            src={`${
-              auth?.user?.avatar ? auth?.user?.avatar : "/profile1.jpeg"
-            }`}
-            alt="Admin"
-            className={`rounded-full ${
-              hide ? "w-[3rem] h-[3rem]" : "w-[4rem] h-[4rem]"
-            }`}
-            onClick={() => {
-              setIsActive(true);
-              setIsProfile(true);
-            }}
-          />
-        </div>
-      </div>
       {/*  */}
       <div className="relative w-full  py-3 h-screen pb-[2rem] overflow-y-auto message">
         <div className="relative w-full pb-[5rem]  flex flex-col gap-4 overflow-y-auto allMessages py-1 pr-1 message">
@@ -629,41 +605,6 @@ export default function Sidebar({ hide, setHide }) {
             </div>
           </div>
 
-          {/* Logout */}
-          <hr className="my-2" />
-          <div
-            className=" mainbtn relative h-[2.6rem] rounded-r-3xl cursor-pointer shadow-sm shadow-gray-300 bg-gray-200  filter drop-shadow-md  overflow-hidden"
-            onClick={handleLogout}
-          >
-            <div
-              className="adminbtn absolute h-full  sidebtn z-[20]"
-              style={{
-                width: active === "layout-settings" && "100%",
-                background: `rgb(2, 68, 2)`,
-              }}
-            ></div>
-            <div className="relative w-full h-full flex items-center px-2 z-30 bg-transparent">
-              {hide ? (
-                <RiLogoutCircleLine
-                  className="h-5 w-5 cursor-pointer ml-2"
-                  style={{ color: active === "layout-settings" && "#fff" }}
-                />
-              ) : (
-                <div className="flex items-center gap-2">
-                  <RiLogoutCircleLine
-                    className="h-5 w-5 cursor-pointer ml-2"
-                    style={{ color: active === "layout-settings" && "#fff" }}
-                  />
-                  <span
-                    className="text-[14px] font-[400] "
-                    style={{ color: active === "layout-settings" && "#fff" }}
-                  >
-                    Logout
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
           {/*  */}
         </div>
       </div>
