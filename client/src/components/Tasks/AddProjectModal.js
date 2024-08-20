@@ -36,7 +36,7 @@ export default function AddProjectModal({
   }, [projectId]);
 
   // -----------Create / Update Task-------->
-  const handleTask = async (e) => {
+  const handleProject = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
@@ -113,7 +113,7 @@ export default function AddProjectModal({
       </div>
       <hr className="h-[1px] w-full bg-gray-400 " />
       <div className="w-full py-2 px-4">
-        <form onSubmit={handleTask} className="w-full flex flex-col gap-4 ">
+        <form onSubmit={handleProject} className="w-full flex flex-col gap-4 ">
           <input
             type="text"
             placeholder="Project Name"

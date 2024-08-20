@@ -1,14 +1,48 @@
 import mongoose from "mongoose";
 
+// Comment Schema
+const commentsSchema = new mongoose.Schema(
+  {
+    user: Object,
+    comment: String,
+    commentReplies: [Object],
+    likes: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+  },
+  { timestamps: true }
+);
+
+const activitySchema = new mongoose.Schema(
+  {
+    userName: {
+      type: String,
+    },
+    ProfileImage: {
+      type: String,
+    },
+    activity: { type: String },
+  },
+  { timestamps: true }
+);
+
 const taskSchema = new mongoose.Schema(
   {
     project: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Projects",
+      _id: {
+        type: String,
+      },
+      projectName: {
+        type: String,
+      },
+      users_list: [Object],
+      status: { type: String },
     },
     jobHolder: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Users",
+      type: String,
     },
     task: {
       type: String,
@@ -17,7 +51,7 @@ const taskSchema = new mongoose.Schema(
     hours: {
       type: String,
     },
-    start_Date: {
+    startDate: {
       type: Date,
       default: new Date(),
     },
@@ -25,22 +59,22 @@ const taskSchema = new mongoose.Schema(
       type: Date,
       default: new Date(),
     },
-    job_Date: {
-      type: Date,
-      default: new Date(),
-    },
     status: {
       type: String,
-      default: "Process",
+      default: "Progress",
     },
-    Lead: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Users",
+    lead: {
+      type: String,
     },
     estimate_Time: {
       type: String,
       default: "Om",
     },
+    comments: [commentsSchema],
+    label: {
+      type: String,
+    },
+    activity: [activitySchema],
   },
   { timestamps: true }
 );
