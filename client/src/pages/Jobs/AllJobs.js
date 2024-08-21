@@ -1581,6 +1581,7 @@ export default function AllJobs() {
             jobId={jobId}
             setJobId={setJobId}
             users={users}
+            type={"Jobs"}
           />
         </div>
       )}

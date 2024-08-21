@@ -2,7 +2,7 @@ import axios from "axios";
 import React, { useEffect, useState } from "react";
 import { MdOutlineKeyboardBackspace } from "react-icons/md";
 
-export default function CompletedTasks({ setShowCompleted }) {
+export default function CompletedTasks({ setShowCompleted, setActive1 }) {
   const [show, setShow] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [projects, setProjects] = useState([]);
@@ -28,7 +28,10 @@ export default function CompletedTasks({ setShowCompleted }) {
     <div className="relative w-full min-h-screen py-4 px-2 sm:px-4">
       <button
         className=" absolute top-1  p-[2px] rounded-full left-2 bg-gray-300/30 hover:bg-gray-300/50"
-        onClick={() => setShowCompleted(false)}
+        onClick={() => {
+          setActive1("All");
+          setShowCompleted(false);
+        }}
       >
         <MdOutlineKeyboardBackspace className="h-6 w-6 cursor-pointer text-orange-500" />
       </button>

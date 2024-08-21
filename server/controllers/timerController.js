@@ -1,4 +1,5 @@
 import jobsModel from "../models/jobsModel.js";
+import taskModel from "../models/taskModel.js";
 import timerModel from "../models/timerModel.js";
 import timerStatusModel from "../models/timerStatusModel.js";
 
@@ -129,23 +130,22 @@ export const totalTime = async (req, res) => {
     // } else
     if (totalTimeInSeconds < 3600) {
       const totalTimeInMinutes = totalTimeInSeconds / 60;
-      responseMessage = `${totalTimeInMinutes.toFixed(0)} m`;
+      responseMessage = `${totalTimeInMinutes.toFixed(0)}m`;
     } else {
       const totalTimeInHours = totalTimeInSeconds / 3600;
-      responseMessage = `${totalTimeInHours.toFixed(0)} h`;
+      responseMessage = `${totalTimeInHours.toFixed(0)}h`;
     }
     // Update Time in Job
-    const job = await jobsModel.findById(jobId);
-    if (!job) {
-      return res.status(400).send({
-        success: false,
-        message: "Client job not found!",
-      });
-    }
-
     await jobsModel.findByIdAndUpdate(
-      { _id: job._id },
+      { _id: jobId },
       { $set: { totalTime: responseMessage } },
+      { new: true }
+    );
+
+    // Update Total Time in Task
+    await taskModel.findByIdAndUpdate(
+      { _id: jobId },
+      { $set: { estimate_Time: responseMessage } },
       { new: true }
     );
 

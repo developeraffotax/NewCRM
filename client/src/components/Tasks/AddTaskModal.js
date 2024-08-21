@@ -1,9 +1,10 @@
 import axios from "axios";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { IoClose } from "react-icons/io5";
 import { style } from "../../utlis/CommonStyle";
 import { TbLoader2 } from "react-icons/tb";
+import format from "date-fns/format";
 
 export default function AddTaskModal({
   users,
@@ -12,6 +13,8 @@ export default function AddTaskModal({
   taskId,
   setTaskId,
   getAllTasks,
+  taskDetal,
+  setShowDetail,
 }) {
   const [loading, setLoading] = useState(false);
   const [projectId, setProjectId] = useState("");
@@ -22,17 +25,21 @@ export default function AddTaskModal({
   const [deadline, setDeadline] = useState("");
   const [lead, setLead] = useState("");
   const [label, setLabel] = useState("");
+  const [projectName, setProjectName] = useState("");
 
-  console.log({
-    projectId,
-    jobHolder,
-    task,
-    hours,
-    startDate,
-    deadline,
-    lead,
-    label,
-  });
+  useEffect(() => {
+    if (taskDetal) {
+      setProjectId(taskDetal.project._id);
+      setProjectName(taskDetal.project.projectName);
+      setJobHolder(taskDetal.jobHolder);
+      setTask(taskDetal.task);
+      setHours(taskDetal.hours);
+      setStartDate(format(new Date(taskDetal.startDate), "yyyy-MM-dd"));
+      setDeadline(format(new Date(taskDetal.deadline), "yyyy-MM-dd"));
+      setLead(taskDetal.lead);
+      setLabel(taskDetal.label);
+    }
+  }, [taskId, taskDetal]);
 
   // ---------Create / Update task---------
   const handleTask = async (e) => {
@@ -55,6 +62,7 @@ export default function AddTaskModal({
         );
         if (data?.success) {
           getAllTasks();
+          setShowDetail(false);
           setLoading(false);
           setIsOpen(false);
           toast.success("Task Updated!");
@@ -108,6 +116,7 @@ export default function AddTaskModal({
           <select
             className={`${style.input}`}
             required
+            value={projectId}
             onChange={(e) => setProjectId(e.target.value)}
           >
             <option>Select Project</option>

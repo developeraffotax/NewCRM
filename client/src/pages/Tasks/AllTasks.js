@@ -9,7 +9,11 @@ import {
 import axios from "axios";
 import AddProjectModal from "../../components/Tasks/AddProjectModal";
 import { IoIosArrowUp, IoIosArrowDown } from "react-icons/io";
-import { IoCheckmarkDoneCircleSharp, IoClose } from "react-icons/io5";
+import {
+  IoBriefcaseOutline,
+  IoCheckmarkDoneCircleSharp,
+  IoClose,
+} from "react-icons/io5";
 import { MdAutoGraph, MdInsertComment, MdOutlineEdit } from "react-icons/md";
 import { AiTwotoneDelete } from "react-icons/ai";
 import Swal from "sweetalert2";
@@ -28,9 +32,26 @@ import { format } from "date-fns";
 import { Timer } from "../../utlis/Timer";
 import { useLocation } from "react-router-dom";
 import { GrCopy } from "react-icons/gr";
+import { mkConfig, generateCsv, download } from "export-to-csv";
+import JobCommentModal from "../Jobs/JobCommentModal";
+import TaskDetail from "./TaskDetail";
+
+// CSV Configuration
+const csvConfig = mkConfig({
+  filename: "full_table_data",
+  fieldSeparator: ",",
+  quoteStrings: '"',
+  decimalSeparator: ".",
+  showLabels: true,
+  showTitle: true,
+  title: "Exported Tasks Table Data",
+  useTextFile: false,
+  useBom: true,
+  useKeysAsHeaders: true,
+});
 
 const AllTasks = () => {
-  const { auth } = useAuth();
+  const { auth, filterId, setFilterId } = useAuth();
   const [show, setShow] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [users, setUsers] = useState([]);
@@ -51,10 +72,42 @@ const AllTasks = () => {
   const [isShow, setIsShow] = useState(false);
   const location = useLocation();
   const currentPath = location.pathname;
+  // Filters
+  const [showJobHolder, setShowJobHolder] = useState(false);
+  const [showDue, setShowDue] = useState(false);
+  const [showStatus, setShowStatus] = useState(false);
+  const [active1, setActive1] = useState("");
+  const [filterData, setFilterData] = useState([]);
+  const [isComment, setIsComment] = useState(false);
+  const [commentTaskId, setCommentTaskId] = useState("");
+  const [userName, setUserName] = useState([]);
+  const [showDetail, setShowDetail] = useState(false);
+  const [taskID, setTaskID] = useState("");
+  const [projectName, setProjectName] = useState("");
 
   const dateStatus = ["Due", "Overdue"];
 
   const status = ["Todo", "Progress", "Review", "Onhold"];
+
+  // -------Get All Tasks----->
+  const getAllTasks = async () => {
+    setLoading(true);
+    try {
+      const { data } = await axios.get(
+        `${process.env.REACT_APP_API_URL}/api/v1/tasks/get/all`
+      );
+      setTasksData(data?.tasks);
+      setLoading(false);
+    } catch (error) {
+      console.log(error);
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    getAllTasks();
+    // eslint-disable-next-line
+  }, []);
 
   //---------- Get All Users-----------
   const getAllUsers = async () => {
@@ -63,6 +116,7 @@ const AllTasks = () => {
         `${process.env.REACT_APP_API_URL}/api/v1/user/get_all/users`
       );
       setUsers(data?.users);
+      setUserName(data?.users.map((user) => user.name));
     } catch (error) {
       console.log(error);
     }
@@ -160,25 +214,103 @@ const AllTasks = () => {
   };
   // ------------------------------Tasks----------------->
 
-  // -------Get All Tasks----->
-  const getAllTasks = async () => {
-    setLoading(true);
-    try {
-      const { data } = await axios.get(
-        `${process.env.REACT_APP_API_URL}/api/v1/tasks/get/all`
-      );
-      setTasksData(data?.tasks);
-      setLoading(false);
-    } catch (error) {
-      console.log(error);
-      setLoading(false);
+  // ------------Filter By Projects---------->
+  const getProjectsCount = (project) => {
+    if (project === "All") {
+      return tasksData?.length;
     }
+    return tasksData.filter((item) => item?.project?.projectName === project)
+      ?.length;
+  };
+
+  // --------------Job_Holder Length---------->
+
+  const getJobHolderCount = (user, project) => {
+    return tasksData.filter((item) =>
+      project === "All"
+        ? item?.jobHolder === user
+        : item?.jobHolder === user && item?.project?.projectName === project
+    )?.length;
+  };
+
+  // -------Due & Overdue count------->
+  const getDueAndOverdueCountByDepartment = (project) => {
+    const filteredData = tasksData.filter(
+      (item) => item.project?.projectName === project || project === "All"
+    );
+
+    const dueCount = filteredData.filter(
+      (item) => getStatus(item.deadline, item.startDate) === "Due"
+    ).length;
+    const overdueCount = filteredData.filter(
+      (item) => getStatus(item.deadline, item.startDate) === "Overdue"
+    ).length;
+
+    return { due: dueCount, overdue: overdueCount };
+  };
+
+  // --------------Status Length---------->
+  const getStatusCount = (status, projectName) => {
+    return tasksData.filter((item) =>
+      projectName === "All"
+        ? item?.status === status
+        : item?.status === status && item?.project?.projectName === projectName
+    )?.length;
+  };
+
+  // --------------Filter Data By Department ----------->
+
+  const filterByDep = (value) => {
+    const filteredData = tasksData.filter(
+      (item) =>
+        item.project?.projectName === value ||
+        item.status === value ||
+        item.jobHolder === value ||
+        item._id === value
+    );
+
+    console.log("FilterData", filteredData);
+
+    setFilterData([...filteredData]);
   };
 
   useEffect(() => {
-    getAllTasks();
+    if (tasksData && filterId) {
+      filterByDep(filterId);
+    }
     // eslint-disable-next-line
-  }, []);
+  }, [tasksData, filterId]);
+
+  // -------------- Filter Data By Department || Status || Placeholder ----------->
+
+  const filterByProjStat = (value, proj) => {
+    let filteredData = [];
+
+    if (proj === "All") {
+      filteredData = tasksData.filter(
+        (item) =>
+          item.status === value ||
+          item.jobHolder === value ||
+          getStatus(item.deadline, item.startDate) === value ||
+          getStatus(item.deadline, item.startDate) === value
+      );
+    } else {
+      filteredData = tasksData.filter((item) => {
+        const jobMatches = item.project?.projectName === proj;
+        const statusMatches = item.status === value;
+        const holderMatches = item.jobHolder === value;
+
+        return (
+          (holderMatches && jobMatches) ||
+          (statusMatches && jobMatches) ||
+          (jobMatches && getStatus(item.deadline, item.startDate) === value) ||
+          (jobMatches && getStatus(item.deadline, item.startDate) === value)
+        );
+      });
+    }
+
+    setFilterData([...filteredData]);
+  };
 
   // -----------Update Task-Project-------->
   const updateTaskProject = async (taskId, projectId) => {
@@ -220,6 +352,14 @@ const AllTasks = () => {
       if (data?.success) {
         const updateTask = data?.task;
         toast.success("Task updated successfully!");
+        if (filterId || active || active1) {
+          setFilterData((prevData) =>
+            prevData.map((item) =>
+              item._id === updateTask._id ? updateTask : item
+            )
+          );
+        }
+
         setTasksData((prevData) =>
           prevData.map((item) =>
             item._id === updateTask._id ? updateTask : item
@@ -298,15 +438,10 @@ const AllTasks = () => {
   // -----------Copy Task------->
 
   const copyTask = async (originalTask) => {
-    // Make a deep copy of the task
     const taskCopy = { ...originalTask };
-
-    // Empty the 'task' field
     taskCopy.task = "";
 
-    // Remove the '_id' field
-    delete taskCopy._id;
-    // console.log("Copied Task:", taskCopy);
+    // delete taskCopy._id;
     // setTasksData((prevData) => [...prevData, taskCopy]);
 
     const { data } = await axios.post(
@@ -326,6 +461,52 @@ const AllTasks = () => {
       console.log("Copied Task:", data.task);
 
       setTasksData((prevData) => [...prevData, data.task]);
+    }
+  };
+
+  // ---------Stop Timer ----------->
+  const handleStopTimer = () => {
+    if (timerRef.current) {
+      timerRef.current.stopTimer();
+    }
+  };
+
+  // -----------Download in CSV------>
+  const flattenData = (data) => {
+    return data.map((row) => ({
+      projectName: row.project.projectName,
+      projectId: row.project._id,
+      jobHolder: row.jobHolder,
+      task: row.task,
+      hours: row.hours,
+      startDate: row.startDate,
+      deadline: row.deadline || "",
+      status: row.status || "",
+      lead: row.lead || "",
+      estimate_Time: row.estimate_Time || "",
+    }));
+  };
+
+  const handleExportData = () => {
+    const csvData = flattenData(tasksData);
+    const csv = generateCsv(csvConfig)(csvData);
+    download(csvConfig)(csv);
+  };
+  // ---------Handle Delete Task-------------
+  const handleDeleteTask = async (id) => {
+    const filterData = tasksData.filter((item) => item._id !== id);
+    setTasksData(filterData);
+    try {
+      const { data } = await axios.delete(
+        `${process.env.REACT_APP_API_URL}/api/v1/tasks/delete/task/${id}`
+      );
+      if (data) {
+        setShowDetail(false);
+        toast.success("Task deleted successfully!");
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error(error?.response?.data?.message);
     }
   };
 
@@ -391,34 +572,54 @@ const AllTasks = () => {
           );
         },
         filterFn: "equals",
-        filterSelectOptions: users.map((jobhold) => jobhold),
+        filterSelectOptions: users.map((jobhold) => jobhold.name),
         filterVariant: "select",
         size: 130,
         minSize: 80,
         maxSize: 150,
         grow: true,
       },
-
       {
         accessorKey: "task",
         header: "Tasks",
         Cell: ({ cell, row }) => {
           const task = cell.getValue();
           const [allocateTask, setAllocateTask] = useState(task);
+          const [showEdit, setShowEdit] = useState(false);
 
           const updateAllocateTask = (task) => {
             updateAlocateTask(row.original._id, allocateTask, "", "");
+            setShowEdit(false);
           };
           return (
             <div className="w-full h-full">
-              <input
-                type="text"
-                placeholder="Enter Task..."
-                value={allocateTask}
-                onChange={(e) => setAllocateTask(e.target.value)}
-                onBlur={(e) => updateAllocateTask(e.target.value)}
-                className="w-full h-[2.3rem] focus:border border-gray-300 px-1 outline-none rounded"
-              />
+              {showEdit ? (
+                <input
+                  type="text"
+                  placeholder="Enter Task..."
+                  value={allocateTask}
+                  onChange={(e) => setAllocateTask(e.target.value)}
+                  onBlur={(e) => updateAllocateTask(e.target.value)}
+                  className="w-full h-[2.3rem] focus:border border-gray-300 px-1 outline-none rounded"
+                />
+              ) : (
+                <div
+                  className="w-full h-full cursor-pointer "
+                  onDoubleClick={() => setShowEdit(true)}
+                  onClick={() => {
+                    setTaskID(row.original._id);
+                    setProjectName(row.original.project.projectName);
+                    setShowDetail(true);
+                  }}
+                >
+                  <p
+                    className="text-sky-500 cursor-pointer hover:text-sky-600 "
+                    onDoubleClick={() => setShowEdit(true)}
+                  >
+                    {allocateTask}
+                  </p>
+                </div>
+              )}
             </div>
           );
         },
@@ -571,7 +772,6 @@ const AllTasks = () => {
           );
         },
       },
-
       // Job DeadLine
       {
         accessorKey: "deadline",
@@ -715,7 +915,6 @@ const AllTasks = () => {
           );
         },
       },
-
       //  -----Due & Over Due Status----->
       {
         accessorKey: "datestatus",
@@ -832,9 +1031,6 @@ const AllTasks = () => {
         accessorKey: "timertracker",
         header: "Time Tr.",
         Cell: ({ cell, row }) => {
-          // const statusValue = cell.getValue();
-          // console.log("row", row.original.job.jobName);
-
           return (
             <div
               className="flex items-center justify-center gap-1 w-full h-full "
@@ -865,10 +1061,17 @@ const AllTasks = () => {
           const comments = cell.getValue();
 
           return (
-            <div className="flex items-center justify-center gap-1 w-full h-full">
+            <div
+              className="flex items-center justify-center gap-1 w-full h-full"
+              onClick={() => {
+                setCommentTaskId(row.original._id);
+                setIsComment(true);
+              }}
+            >
               <span className="text-[1rem] cursor-pointer">
                 <MdInsertComment className="h-5 w-5 text-orange-600 " />
               </span>
+              {comments?.length > 0 && <span>({comments?.length})</span>}
             </div>
           );
         },
@@ -896,14 +1099,12 @@ const AllTasks = () => {
       },
     ],
     // eslint-disable-next-line
-    [projects, auth?.user?.id, currentPath, users, play]
+    [projects, auth?.user?.id, currentPath, users, play, note]
   );
 
   const table = useMaterialReactTable({
     columns,
-    data: tasksData,
-    // getRowId: (originalRow) => originalRow?.id,
-    // enableRowSelection: true,
+    data: active === "All" && !active1 && !filterId ? tasksData : filterData,
     enableStickyHeader: true,
     enableStickyFooter: true,
     columnFilterDisplayMode: "popover",
@@ -970,7 +1171,7 @@ const AllTasks = () => {
           }}
         >
           <Button
-            // onClick={handleExportData}
+            onClick={handleExportData}
             // startIcon={<FileDownloadIcon />}
             className="w-[2rem] rounded-full"
           >
@@ -1085,7 +1286,7 @@ const AllTasks = () => {
           </div>
           {/*  */}
           <div className="flex flex-col gap-2">
-            {/* -----------Filters By Deparment--------- */}
+            {/* -----------Filters By Projects--------- */}
             <div className="flex items-center flex-wrap gap-2 mt-3">
               <div
                 className={`py-1 rounded-tl-md rounded-tr-md px-1 cursor-pointer font-[500] text-[14px] ${
@@ -1094,17 +1295,16 @@ const AllTasks = () => {
                 }`}
                 onClick={() => {
                   setActive("All");
-                  setActiveBtn("");
-                  // filterByDep(dep);
-                  // setShowCompleted(false);
-                  // setActive1("");
-                  // setFilterId("");
+                  filterByDep("All");
+                  setShowCompleted(false);
+                  setActive1("");
+                  setFilterId("");
                 }}
               >
-                All (0)
+                All ({getProjectsCount("All")})
               </div>
               {projects?.map((proj, i) => {
-                // getDueAndOverdueCountByDepartment(proj);
+                getDueAndOverdueCountByDepartment(proj?.projectName);
                 return (
                   <div
                     className={`py-1 rounded-tl-md rounded-tr-md px-1 cursor-pointer font-[500] text-[14px] ${
@@ -1114,14 +1314,13 @@ const AllTasks = () => {
                     key={i}
                     onClick={() => {
                       setActive(proj?.projectName);
-                      setActiveBtn("");
-                      // filterByDep(dep);
-                      // setShowCompleted(false);
-                      // setActive1("");
-                      // setFilterId("");
+                      filterByDep(proj?.projectName);
+                      setShowCompleted(false);
+                      setActive1("");
+                      setFilterId("");
                     }}
                   >
-                    {proj?.projectName} (0)
+                    {proj?.projectName} ({getProjectsCount(proj?.projectName)})
                   </div>
                 );
               })}
@@ -1141,60 +1340,157 @@ const AllTasks = () => {
               </div>
               {/*  */}
               {/* -------------Filter Open Buttons-------- */}
-              {/* <span
-              className={` p-1 rounded-md hover:shadow-md bg-gray-50 mb-1  cursor-pointer border  ${
-                activeBtn === "jobHolder" && "bg-orange-500 text-white"
-              }`}
-              onClick={() => {
-                setActiveBtn("jobHolder");
-                setShowJobHolder(!showJobHolder);
-              }}
-              title="Filter by Job Holder"
-            >
-              <IoBriefcaseOutline className="h-6 w-6  cursor-pointer " />
-            </span>
-            <span
-              className={` p-1 rounded-md hover:shadow-md mb-1 bg-gray-50 cursor-pointer border ${
-                activeBtn === "due" && "bg-orange-500 text-white"
-              }`}
-              onClick={() => {
-                setActiveBtn("due");
-                setShowDue(!showDue);
-              }}
-              title="Filter by Status"
-            >
-              <TbCalendarDue className="h-6 w-6  cursor-pointer" />
-            </span>
-            <span
-              className={` p-1 rounded-md hover:shadow-md mb-1 bg-gray-50 cursor-pointer border ${
-                activeBtn === "status" && "bg-orange-500 text-white"
-              }`}
-              onClick={() => {
-                setActiveBtn("status");
-                setShowStatus(!showStatus);
-              }}
-              title="Filter by Job Status"
-            >
-              <MdAutoGraph className="h-6 w-6  cursor-pointer" />
-            </span>
-            <span
-              className={` p-1 rounded-md hover:shadow-md mb-1 bg-gray-50 cursor-pointer border `}
-              onClick={() => {
-                setActive("All");
-                setActiveBtn("");
-                setShowStatus(false);
-                setShowJobHolder(false);
-                setShowDue(false);
-                setActive1("");
-                setFilterId("");
-              }}
-              title="Clear filters"
-            >
-              <IoClose className="h-6 w-6  cursor-pointer" />
-            </span> */}
+              <span
+                className={` p-1 rounded-md hover:shadow-md bg-gray-50 mb-1  cursor-pointer border  ${
+                  activeBtn === "jobHolder" && "bg-orange-500 text-white"
+                }`}
+                onClick={() => {
+                  setActiveBtn("jobHolder");
+                  setShowJobHolder(!showJobHolder);
+                }}
+                title="Filter by Job Holder"
+              >
+                <IoBriefcaseOutline className="h-6 w-6  cursor-pointer " />
+              </span>
+              <span
+                className={` p-1 rounded-md hover:shadow-md mb-1 bg-gray-50 cursor-pointer border ${
+                  activeBtn === "due" && "bg-orange-500 text-white"
+                }`}
+                onClick={() => {
+                  setActiveBtn("due");
+                  setShowDue(!showDue);
+                }}
+                title="Filter by Status"
+              >
+                <TbCalendarDue className="h-6 w-6  cursor-pointer" />
+              </span>
+              <span
+                className={` p-1 rounded-md hover:shadow-md mb-1 bg-gray-50 cursor-pointer border ${
+                  activeBtn === "status" && "bg-orange-500 text-white"
+                }`}
+                onClick={() => {
+                  setActiveBtn("status");
+                  setShowStatus(!showStatus);
+                }}
+                title="Filter by Job Status"
+              >
+                <MdAutoGraph className="h-6 w-6  cursor-pointer" />
+              </span>
+              <span
+                className={` p-1 rounded-md hover:shadow-md mb-1 bg-gray-50 cursor-pointer border `}
+                onClick={() => {
+                  setActive("All");
+                  setActiveBtn("");
+                  setShowStatus(false);
+                  setShowJobHolder(false);
+                  setShowDue(false);
+                  setActive1("");
+                  setFilterId("");
+                }}
+                title="Clear filters"
+              >
+                <IoClose className="h-6 w-6  cursor-pointer" />
+              </span>
             </div>
             {/*  */}
             <hr className="mb-1 bg-gray-300 w-full h-[1px]" />
+
+            {/* ----------Job_Holder Summery Filters---------- */}
+            {showJobHolder && activeBtn === "jobHolder" && (
+              <>
+                <div className="w-full  py-2 ">
+                  <h3 className="text-[19px] font-semibold text-black">
+                    Job Holder Summary
+                  </h3>
+                  <div className="flex items-center flex-wrap gap-4">
+                    {users?.map((user, i) => (
+                      <div
+                        className={`py-1 rounded-tl-md rounded-tr-md px-1 cursor-pointer font-[500] text-[14px] ${
+                          active1 === user.name &&
+                          "  border-b-2 text-orange-600 border-orange-600"
+                        }`}
+                        key={i}
+                        onClick={() => {
+                          setActive1(user?.name);
+                          filterByProjStat(user?.name, active);
+                        }}
+                      >
+                        {user.name} ({getJobHolderCount(user?.name, active)})
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <hr className="mb-1 bg-gray-300 w-full h-[1px]" />
+              </>
+            )}
+
+            {/* ----------Date Status Summery Filters---------- */}
+            {showDue && activeBtn === "due" && (
+              <>
+                <div className="w-full py-2">
+                  <h3 className="text-[19px] font-semibold text-black">
+                    Date Status Summary
+                  </h3>
+                  <div className="flex items-center flex-wrap gap-4">
+                    {dateStatus?.map((stat, i) => {
+                      const { due, overdue } =
+                        getDueAndOverdueCountByDepartment(active);
+                      return (
+                        <div
+                          className={`py-1 rounded-tl-md rounded-tr-md px-1 cursor-pointer font-[500] text-[14px] ${
+                            active1 === stat &&
+                            " border-b-2 text-orange-600 border-orange-600"
+                          }`}
+                          key={i}
+                          onClick={() => {
+                            setActive1(stat);
+                            filterByProjStat(stat, active);
+                          }}
+                        >
+                          {stat === "Due" ? (
+                            <span>Due {due}</span>
+                          ) : (
+                            <span>Overdue {overdue}</span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+                <hr className="mb-1 bg-gray-300 w-full h-[1px]" />
+              </>
+            )}
+
+            {/* ----------Status Summery Filters---------- */}
+            {showStatus && activeBtn === "status" && (
+              <>
+                <div className="w-full  py-2 ">
+                  <h3 className="text-[19px] font-semibold text-black">
+                    Status Summary
+                  </h3>
+                  <div className="flex items-center flex-wrap gap-4">
+                    {status?.map((stat, i) => (
+                      <div
+                        className={`py-1 rounded-tl-md rounded-tr-md px-1 cursor-pointer font-[500] text-[14px] ${
+                          active1 === stat &&
+                          "  border-b-2 text-orange-600 border-orange-600"
+                        }`}
+                        key={i}
+                        onClick={() => {
+                          setActive1(stat);
+                          filterByProjStat(stat, active);
+                        }}
+                      >
+                        {stat} ({getStatusCount(stat, active)})
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <hr className="mb-1 bg-gray-300 w-full h-[1px]" />
+              </>
+            )}
+            {/*  */}
+            {/* <hr className="mb-1 bg-gray-300 w-full h-[1px]" /> */}
             {loading ? (
               <div className="flex items-center justify-center w-full h-screen px-4 py-4">
                 <Loader />
@@ -1231,15 +1527,99 @@ const AllTasks = () => {
                 users={users}
                 setIsOpen={setIsOpen}
                 projects={projects}
-                taskId={taskId}
+                taskId={""}
                 setTaskId={setTaskId}
                 getAllTasks={getAllTasks}
+                taskDetal={null}
               />
             </div>
           )}
+
+          {/* ------------Comment Modal---------*/}
+
+          {isComment && (
+            <div className="fixed bottom-4 right-4 w-[30rem] max-h-screen z-[999]  flex items-center justify-center">
+              <JobCommentModal
+                setIsComment={setIsComment}
+                jobId={commentTaskId}
+                setJobId={setCommentTaskId}
+                users={userName}
+                type={"Task"}
+              />
+            </div>
+          )}
+
+          {/* -------------Stop Timer Btn-----------*/}
+          {isShow && (
+            <div className="fixed top-0 left-0 z-[999] w-full h-full bg-gray-300/80 flex items-center justify-center">
+              <div className="w-[32rem] rounded-md bg-white shadow-md">
+                <div className="flex  flex-col gap-3 ">
+                  <div className=" w-full flex items-center justify-between py-2 mt-1 px-4">
+                    <h3 className="text-[19px] font-semibold text-gray-800">
+                      Enter your note here
+                    </h3>
+                    <span
+                      onClick={() => {
+                        setIsShow(false);
+                      }}
+                    >
+                      <IoClose className="text-black cursor-pointer h-6 w-6 " />
+                    </span>
+                  </div>
+                  <hr className="w-full h-[1px] bg-gray-500 " />
+                  <div className=" w-full px-4 py-2 flex-col gap-4">
+                    <textarea
+                      value={note}
+                      onChange={(e) => setNote(e.target.value)}
+                      placeholder="Add note here..."
+                      className="w-full h-[6rem] rounded-md resize-none py-1 px-2 shadow border-2 border-gray-700"
+                    />
+                    <div className="flex items-center justify-end mt-4">
+                      <button
+                        className={`${style.btn}`}
+                        onClick={handleStopTimer}
+                      >
+                        Submit
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/*---------------Task Details---------------*/}
+
+          {showDetail && (
+            <div className="fixed right-0 top-[3.8rem] z-[999] bg-gray-100 w-[35%] h-[calc(100vh-3.8rem)] py-3 px-3 ">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">{projectName}</h3>
+                <span
+                  className="p-1 rounded-md bg-gray-50 border  hover:shadow-md hover:bg-gray-100"
+                  onClick={() => setShowDetail(false)}
+                >
+                  <IoClose className="h-5 w-5 cursor-pointer" />
+                </span>
+              </div>
+              <TaskDetail
+                taskId={taskID}
+                getAllTasks={getAllTasks}
+                handleDeleteTask={handleDeleteTask}
+                setTasksData={setTasksData}
+                setShowDetail={setShowDetail}
+                users={users}
+                projects={projects}
+              />
+            </div>
+          )}
+
+          {/* ---- */}
         </div>
       ) : (
-        <CompletedTasks setShowCompleted={setShowCompleted} />
+        <CompletedTasks
+          setShowCompleted={setShowCompleted}
+          setActive1={setActive}
+        />
       )}
     </Layout>
   );

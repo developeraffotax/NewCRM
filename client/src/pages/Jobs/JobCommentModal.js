@@ -23,6 +23,7 @@ export default function JobCommentModal({
   jobId,
   setJobId,
   users,
+  type,
 }) {
   const { auth } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -85,17 +86,26 @@ export default function JobCommentModal({
     setCommentReply((prevComment) => prevComment + event.emoji);
   };
 
-  //   Get Single Job
+  //  ------------- Get Single Job ||  Task  Comments-----------
   const getSingleJobComment = async () => {
     setIsLoading(true);
     try {
-      const { data } = await axios.get(
-        `${process.env.REACT_APP_API_URL}/api/v1/client/job/comments/${jobId}`
-      );
-      console.log("Comments:", data.comments.comments);
-      if (data) {
-        setIsLoading(false);
-        setCommentData(data.comments.comments);
+      if (type === "Jobs") {
+        const { data } = await axios.get(
+          `${process.env.REACT_APP_API_URL}/api/v1/client/job/comments/${jobId}`
+        );
+        if (data) {
+          setIsLoading(false);
+          setCommentData(data.comments.comments);
+        }
+      } else {
+        const { data } = await axios.get(
+          `${process.env.REACT_APP_API_URL}/api/v1/tasks/task/comments/${jobId}`
+        );
+        if (data) {
+          setIsLoading(false);
+          setCommentData(data.comments.comments);
+        }
       }
     } catch (error) {
       setIsLoading(false);
@@ -122,6 +132,7 @@ export default function JobCommentModal({
         {
           comment: comment,
           jobId: jobId,
+          type,
         }
       );
       if (data) {
@@ -154,7 +165,7 @@ export default function JobCommentModal({
     try {
       const { data } = await axios.put(
         `${process.env.REACT_APP_API_URL}/api/v1/comments/reply/comment`,
-        { commentReply: commentReply, jobId: jobId, commentId: commentId }
+        { commentReply: commentReply, jobId: jobId, commentId: commentId, type }
       );
       if (data) {
         setReplyLoading(false);
@@ -209,7 +220,7 @@ export default function JobCommentModal({
 
       const { data } = await axios.put(
         `${process.env.REACT_APP_API_URL}/api/v1/comments/like/comment`,
-        { jobId: jobId, commentId: commentId }
+        { jobId: jobId, commentId: commentId, type }
       );
       if (data) {
         toast.success("Liked!");
@@ -243,7 +254,7 @@ export default function JobCommentModal({
 
       const { data } = await axios.put(
         `${process.env.REACT_APP_API_URL}/api/v1/comments/unlike/comment`,
-        { jobId: jobId, commentId: commentId }
+        { jobId: jobId, commentId: commentId, type }
       );
       if (data) {
         toast.success("Comment unliked!");

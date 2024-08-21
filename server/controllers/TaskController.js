@@ -278,3 +278,138 @@ export const updateAlocateTask = async (req, res) => {
     });
   }
 };
+
+// Get Single Task Comments
+export const singleTaskComments = async (req, res) => {
+  try {
+    const taskId = req.params.id;
+
+    if (!taskId) {
+      return res.status(400).send({
+        success: false,
+        message: "Task id is required!",
+      });
+    }
+
+    const taskComments = await taskModel
+      .findById({ _id: taskId })
+      .select("comments");
+
+    res.status(200).send({
+      success: true,
+      comments: taskComments,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      success: false,
+      message: "Error in get single job!",
+      error: error,
+    });
+  }
+};
+
+// Delete Task
+export const deleteTask = async (req, res) => {
+  try {
+    const taskId = req.params.id;
+    if (!taskId) {
+      return res.status(400).send({
+        success: false,
+        message: "Task id is required!",
+      });
+    }
+
+    await taskModel.findByIdAndDelete({ _id: taskId });
+
+    res.status(200).send({
+      success: true,
+      message: "Task deleted!",
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      success: false,
+      message: `Error in delete task: ${error} `,
+    });
+  }
+};
+
+// Update Task
+export const updateTask = async (req, res) => {
+  try {
+    const taskId = req.params.id;
+    const {
+      projectId,
+      jobHolder,
+      task,
+      hours,
+      startDate,
+      deadline,
+      lead,
+      label,
+    } = req.body;
+
+    if (!projectId) {
+      return res.status(400).send({
+        success: false,
+        message: "Project Id is required!",
+      });
+    }
+    if (!jobHolder || !lead) {
+      return res.status(400).send({
+        success: false,
+        message: "JobHolder & Lead are required!",
+      });
+    }
+
+    const existingTask = await taskModel.findById(taskId);
+    if (!existingTask) {
+      return res.status(400).send({
+        success: false,
+        message: "Task not found!",
+      });
+    }
+
+    const project = await projectModel.findById(projectId);
+    if (!project) {
+      return res.status(400).send({
+        success: false,
+        message: "Project not found!",
+      });
+    }
+
+    const tasks = await taskModel.findByIdAndUpdate(
+      { _id: existingTask._id },
+      {
+        project: {
+          _id: project._id,
+          projectName: project.projectName,
+          users_list: project.users_list,
+          status: project.status,
+        },
+        jobHolder,
+        task,
+        hours,
+        startDate,
+        deadline,
+        lead,
+        label,
+      },
+      { new: true }
+    );
+
+    res.status(200).send({
+      success: true,
+      message: "Task updated successfully!",
+      task: tasks,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      success: false,
+      messsage: "Error in update task!",
+      error: error,
+    });
+  }
+};

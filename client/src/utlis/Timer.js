@@ -25,6 +25,7 @@ export const Timer = forwardRef(
     const [startTime, setStartTime] = useState(null);
     const [totalTime, setTotalTime] = useState(null);
     const isInitialMount = useRef(true);
+    console.log("Note:", note);
 
     useEffect(() => {
       const fetchTimerStatus = async () => {
@@ -82,7 +83,7 @@ export const Timer = forwardRef(
           {
             clientId,
             jobId,
-            note: "Started work on job",
+            note: `Started work on ${pageName}`,
           }
         );
         setTimerId(response.data.timer._id);

@@ -234,7 +234,7 @@ export default function JobDetail({
                   setNote={setNote}
                   taskLink={"/job-planning"}
                   pageName={"Jobs"}
-                  taskName={"Name"}
+                  taskName={clientDetail?.job?.jobName}
                 />
               </span>
             </div>
@@ -375,7 +375,15 @@ export default function JobDetail({
                   </span>
                   <span className="border border-gray-300 text-gray-600 py-2 px-2 rounded-tr-md">
                     {clientDetail?.currentDate ? (
-                      clientDetail?.currentDate
+                      <span>
+                        {format(
+                          new Date(
+                            clientDetail?.currentDate ||
+                              "2024-07-26T00:00:00.000+00:00"
+                          ),
+                          "dd-MMM-yyyy"
+                        )}
+                      </span>
                     ) : (
                       <span className="text-red-500">N/A</span>
                     )}
