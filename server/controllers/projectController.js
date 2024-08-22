@@ -1,4 +1,5 @@
 import projectModel from "../models/projectModel.js";
+import taskModel from "../models/taskModel.js";
 
 // Create Project
 export const createProject = async (req, res) => {
@@ -174,9 +175,30 @@ export const updateProjectStatus = async (req, res) => {
         message: "Project Id is required!",
       });
     }
-    await projectModel.findByIdAndUpdate(projectId, {
-      $set: { status: "completed" },
-    });
+
+    const project = await projectModel.findById(projectId);
+    if (!project) {
+      return res.status(400).send({
+        success: false,
+        message: "Project not found!",
+      });
+    }
+
+    if (project.status === "processing") {
+      await projectModel.findByIdAndUpdate(projectId, {
+        $set: { status: "completed" },
+      });
+
+      const tasks = await taskModel.updateMany(
+        { "project._id": projectId },
+        { $set: { status: "completed" } },
+        { new: true }
+      );
+    } else {
+      await projectModel.findByIdAndUpdate(projectId, {
+        $set: { status: "processing" },
+      });
+    }
 
     res.status(200).send({
       success: true,

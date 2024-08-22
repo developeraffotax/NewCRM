@@ -1,13 +1,17 @@
 import express from "express";
 import { isAdmin, requiredSignIn } from "../middlewares/authMiddleware.js";
 import {
+  createSubTask,
   createTask,
+  deleteSubTask,
   deleteTask,
+  getAllCompletedTasks,
   getAllTasks,
   getSingleTask,
   singleTaskComments,
   updateAlocateTask,
   updateJobHolderLS,
+  updateSubTaskStaus,
   updateTask,
   updatetaskProject,
 } from "../controllers/TaskController.js";
@@ -40,5 +44,21 @@ router.delete("/delete/task/:id", requiredSignIn, deleteTask);
 
 // Update Full Task
 router.put("/update/task/:id", requiredSignIn, updateTask);
+
+// Create subTask
+router.post("/create/subTask/:id", requiredSignIn, createSubTask);
+
+// Update Task
+router.put("/update/subtask/status/:id", requiredSignIn, updateSubTaskStaus);
+
+// Delete Task
+router.delete(
+  "/delete/subtask/:taskId/:subTaskId",
+  requiredSignIn,
+  deleteSubTask
+);
+
+// Completed Tasks
+router.get("/get/completed", getAllCompletedTasks);
 
 export default router;

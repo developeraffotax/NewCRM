@@ -21,10 +21,24 @@ const activitySchema = new mongoose.Schema(
     userName: {
       type: String,
     },
-    ProfileImage: {
+    profileImage: {
       type: String,
     },
     activity: { type: String },
+  },
+  { timestamps: true }
+);
+
+const subtask = new mongoose.Schema(
+  {
+    subTask: {
+      type: String,
+      trim: true,
+    },
+    status: {
+      type: String,
+      default: "process",
+    },
   },
   { timestamps: true }
 );
@@ -74,8 +88,10 @@ const taskSchema = new mongoose.Schema(
     label: {
       type: String,
     },
-    activity: [activitySchema],
+    activities: [activitySchema],
+    subtasks: [subtask],
   },
+
   { timestamps: true }
 );
 

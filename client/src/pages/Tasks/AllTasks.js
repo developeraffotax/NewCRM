@@ -204,6 +204,7 @@ const AllTasks = () => {
       );
       if (data) {
         getAllProjects();
+        getAllTasks();
         setShowProject(false);
         // toast.success("Project completed!");
       }
@@ -517,9 +518,9 @@ const AllTasks = () => {
       {
         accessorKey: "project.projectName",
         header: "Project",
-        minSize: 170,
+        minSize: 150,
         maxSize: 200,
-        size: 190,
+        size: 160,
         grow: true,
         Cell: ({ cell, row }) => {
           const projectId = row.original.project._id;
@@ -574,8 +575,8 @@ const AllTasks = () => {
         filterFn: "equals",
         filterSelectOptions: users.map((jobhold) => jobhold.name),
         filterVariant: "select",
-        size: 130,
-        minSize: 80,
+        size: 120,
+        minSize: 100,
         maxSize: 150,
         grow: true,
       },
@@ -625,16 +626,16 @@ const AllTasks = () => {
         },
         filterFn: "equals",
         filterVariant: "select",
-        size: 220,
-        minSize: 180,
-        maxSize: 250,
+        size: 320,
+        minSize: 200,
+        maxSize: 350,
         grow: true,
       },
       {
         accessorKey: "hours",
         header: "Hrs",
         filterFn: "equals",
-        size: 90,
+        size: 80,
       },
       // End  year
       {
@@ -927,11 +928,11 @@ const AllTasks = () => {
 
           return (
             <span
-              className={`text-white px-4  rounded-[2rem] ${
+              className={`text-white text-[14px]  rounded-[2rem] ${
                 status === "Due"
-                  ? "bg-green-500  py-[6px] "
+                  ? "bg-green-500  py-[6px] px-4 "
                   : status === "Overdue"
-                  ? "bg-red-500  py-[6px] "
+                  ? "bg-red-500  py-[6px] px-3 "
                   : "bg-transparent"
               }`}
             >
@@ -949,8 +950,8 @@ const AllTasks = () => {
         },
         filterSelectOptions: ["Overdue", "Due"],
         filterVariant: "select",
-        size: 100,
-        minSize: 100,
+        size: 90,
+        minSize: 90,
         maxSize: 120,
         grow: true,
       },
@@ -969,18 +970,27 @@ const AllTasks = () => {
               }
               className="w-[6rem] h-[2rem] rounded-md border border-sky-300 outline-none"
             >
-              <option value="">Select Status</option>
+              {/* <option value="">Select Status</option> */}
               <option value="Todo">Todo</option>
               <option value="Progress">Progress</option>
               <option value="Review">Review</option>
-              <option value="Onhold">Onhold</option>
+              <option value="On hold">On hold</option>
             </select>
           );
         },
         filterFn: "equals",
-        filterSelectOptions: ["Select", "Todo", "Progress", "Review", "Onhold"],
+        filterSelectOptions: [
+          "Select",
+          "Todo",
+          "Progress",
+          "Review",
+          "On hold",
+        ],
         filterVariant: "select",
-        size: 130,
+        minSize: 100,
+        size: 120,
+        maxSize: 140,
+        grow: true,
       },
       {
         accessorKey: "lead",
@@ -994,7 +1004,7 @@ const AllTasks = () => {
               onChange={(e) =>
                 updateTaskJLS(row.original?._id, "", e.target.value, "")
               }
-              className="w-[6rem] h-[2rem] rounded-md border-none bg-transparent outline-none"
+              className="w-[5rem] h-[2rem] rounded-md border-none bg-transparent outline-none"
             >
               <option value="">Select Lead</option>
               {users.map((lead, i) => (
@@ -1008,9 +1018,9 @@ const AllTasks = () => {
         filterFn: "equals",
         filterSelectOptions: users.map((lead) => lead),
         filterVariant: "select",
-        size: 110,
-        minSize: 100,
-        maxSize: 140,
+        size: 90,
+        minSize: 70,
+        maxSize: 120,
         grow: true,
       },
       {
@@ -1075,11 +1085,11 @@ const AllTasks = () => {
             </div>
           );
         },
-        size: 100,
+        size: 90,
       },
       {
         accessorKey: "actions",
-        header: "Actions",
+        header: "Copy",
         Cell: ({ cell, row }) => {
           return (
             <div
@@ -1095,7 +1105,7 @@ const AllTasks = () => {
             </div>
           );
         },
-        size: 80,
+        size: 60,
       },
     ],
     // eslint-disable-next-line
@@ -1618,7 +1628,9 @@ const AllTasks = () => {
       ) : (
         <CompletedTasks
           setShowCompleted={setShowCompleted}
-          setActive1={setActive}
+          setActive2={setActive}
+          getTasks={getAllTasks}
+          getAllProj1={getAllProjects}
         />
       )}
     </Layout>
