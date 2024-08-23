@@ -464,7 +464,7 @@ export const updateClientJob = async (req, res) => {
   }
 };
 
-// Update Jobs Year_end Date
+// Update Jobs Year_end || jobDeadline || currentDate Date
 export const updateDates = async (req, res) => {
   try {
     const jobId = req.params.id;

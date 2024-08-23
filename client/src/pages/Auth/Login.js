@@ -5,6 +5,7 @@ import { useAuth } from "../../context/authContext";
 import { IoMdEye, IoMdEyeOff } from "react-icons/io";
 import { TbLoader3 } from "react-icons/tb";
 import { useNavigate } from "react-router-dom";
+import { style } from "../../utlis/CommonStyle";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -42,28 +43,27 @@ export default function Login() {
   };
   return (
     <div className="w-full min-h-screen flex items-center justify-center py-6 px-4">
-      <div className="bg-gray-100 rounded-md shadow1 py-4 px-4 w-[30rem]">
-        <h3 className="text-2xl font-semibold text-black text-center w-full ">
+      <div className="rounded-md shadow1 py-4 px-4 w-[30rem] backgroundC ">
+        <h3
+          className="text-2xl font-semibold text-white text-center w-full mb-[1.2rem] "
+          style={{ textShadow: "-1px 0px 1px #000" }}
+        >
           Sign In to Affotax
         </h3>
-        <form onSubmit={handleSubmit} className="mt-4 flex flex-col gap-3">
+        <form onSubmit={handleSubmit} className="mt-4 flex flex-col gap-5">
           <div className="flex flex-col gap-2">
-            <label htmlFor="" className="text-[1.1rem] font-[400] ">
-              Enter your Email
-            </label>
-            <input
-              type="email"
-              placeholder="loginmail@gmail.com"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="py-2 px-3 border-2  text-[15px] outline-none border-gray-900 rounded-md shadow-md"
-            />
+            <div className="inputBox">
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className={`${style.input} w-full py-2 px-3 border-2 bg-white  text-[15px] outline-none border-gray-900 rounded-md shadow-md `}
+              />
+              <span>Enter your Email</span>
+            </div>
           </div>
           <div className="flex flex-col gap-2">
-            <label htmlFor="" className="text-[1.1rem] font-[400] ">
-              Enter your Password
-            </label>
             <div className="relative w-full">
               <div
                 className="absolute top-2 right-2 z-10 cursor-pointer"
@@ -75,15 +75,18 @@ export default function Login() {
                   <IoMdEye size={25} className="cursor-pointer" />
                 )}
               </div>
-              <input
-                type={!isShow ? "password" : "text"}
-                placeholder="password!@#%"
-                required
-                value={password}
-                // minLength={8}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full py-2 px-3 border-2  text-[15px] outline-none border-gray-900 rounded-md shadow-md"
-              />
+
+              <div className="inputBox">
+                <input
+                  type={!isShow ? "password" : "text"}
+                  required
+                  value={password}
+                  // minLength={8}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className={`${style.input} w-full py-2 px-3 border-2  bg-white text-[15px] outline-none border-gray-900 rounded-md shadow-md `}
+                />
+                <span>Password</span>
+              </div>
             </div>
             {/* <div className="flex items-start sm:items-center flex-col sm:flex-row justify-normal sm:justify-between my-3">
               <span
@@ -94,18 +97,20 @@ export default function Login() {
                 Reset Password
               </span>
             </div> */}
-            <button
-              type="submit"
-              className={`btn ${
-                loading && "animate-pulse pointer-events-none"
-              }`}
-            >
-              {loading ? (
-                <TbLoader3 className="h-5 w-5 animate-spin " />
-              ) : (
-                "Sign In"
-              )}
-            </button>
+            <div className=" w-full flex items-center justify-end mt-4">
+              <button
+                type="submit"
+                className={`py-[.5rem] px-[1.6rem]  flex items-center justify-center text-white shadow cursor-pointer rounded-[2rem] bg-sky-500 hover:bg-sky-600  ${
+                  loading && "animate-pulse pointer-events-none "
+                }`}
+              >
+                {loading ? (
+                  <TbLoader3 className="h-5 w-5 animate-spin " />
+                ) : (
+                  "Sign In"
+                )}
+              </button>
+            </div>
           </div>
         </form>
       </div>

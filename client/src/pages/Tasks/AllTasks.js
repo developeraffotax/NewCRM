@@ -84,6 +84,7 @@ const AllTasks = () => {
   const [showDetail, setShowDetail] = useState(false);
   const [taskID, setTaskID] = useState("");
   const [projectName, setProjectName] = useState("");
+  const [totalHours, setTotalHours] = useState("0");
 
   const dateStatus = ["Due", "Overdue"];
 
@@ -96,7 +97,18 @@ const AllTasks = () => {
       const { data } = await axios.get(
         `${process.env.REACT_APP_API_URL}/api/v1/tasks/get/all`
       );
-      setTasksData(data?.tasks);
+
+      if (auth.user.role === "Admin") {
+        setTasksData(data?.tasks);
+      } else {
+        const filteredTasks = data?.tasks?.filter(
+          (item) => item.jobHolder.trim() === auth.user.name.trim()
+        );
+
+        console.log("filteredData:", filteredTasks);
+        setTasksData(filteredTasks);
+      }
+
       setLoading(false);
     } catch (error) {
       console.log(error);
@@ -108,6 +120,27 @@ const AllTasks = () => {
     getAllTasks();
     // eslint-disable-next-line
   }, []);
+
+  // ---------Total Hours-------->
+  useEffect(() => {
+    if (active === "All") {
+      if (filterData) {
+        const totalHours = tasksData.reduce(
+          (sum, client) => sum + Number(client.hours),
+          0
+        );
+        setTotalHours(totalHours.toFixed(0));
+      }
+    } else {
+      if (filterData) {
+        const totalHours = filterData.reduce(
+          (sum, client) => sum + Number(client.hours),
+          0
+        );
+        setTotalHours(totalHours.toFixed(0));
+      }
+    }
+  }, [filterData, tasksData, active]);
 
   //---------- Get All Users-----------
   const getAllUsers = async () => {
@@ -133,7 +166,15 @@ const AllTasks = () => {
       const { data } = await axios.get(
         `${process.env.REACT_APP_API_URL}/api/v1/projects/get_all/project`
       );
-      setProjects(data?.projects);
+      if (auth.user.role === "Admin") {
+        setProjects(data?.projects);
+      } else {
+        const filteredProjects = data.projects.filter((project) =>
+          project.users_list.some((user) => user._id === auth?.user?.id)
+        );
+
+        setProjects(filteredProjects);
+      }
     } catch (error) {
       console.log(error);
     }
@@ -270,7 +311,7 @@ const AllTasks = () => {
         item._id === value
     );
 
-    console.log("FilterData", filteredData);
+    // console.log("FilterData", filteredData);
 
     setFilterData([...filteredData]);
   };
@@ -391,7 +432,7 @@ const AllTasks = () => {
       );
       if (data?.success) {
         const updateTask = data?.task;
-        // toast.success("Task updated successfully!");
+        toast.success("Task updated successfully!");
         setTasksData((prevData) =>
           prevData.map((item) =>
             item._id === updateTask._id ? updateTask : item
@@ -413,27 +454,42 @@ const AllTasks = () => {
   };
 
   // <-----------Task Status------------->
-  const getStatus = (jobDeadline, yearEnd) => {
-    const deadline = new Date(jobDeadline);
-    const yearEndDate = new Date(yearEnd);
+  // const getStatus = (jobDeadline, yearEnd) => {
+  //   const deadline = new Date(jobDeadline);
+  //   const yearEndDate = new Date(yearEnd);
+  //   const today = new Date();
+  //   today.setHours(0, 0, 0, 0);
+
+  //   const deadlineDate = new Date(deadline);
+  //   deadlineDate.setHours(0, 0, 0, 0);
+
+  //   const yearEndDateOnly = new Date(yearEndDate);
+  //   yearEndDateOnly.setHours(0, 0, 0, 0);
+
+  //   if (deadlineDate < today || yearEndDateOnly < today) {
+  //     return "Overdue";
+  //   } else if (
+  //     deadlineDate.getTime() === today.getTime() ||
+  //     yearEndDateOnly.getTime() === today.getTime()
+  //   ) {
+  //     return "Due";
+  //   }
+  //   return "";
+  // };
+
+  const getStatus = (startDate, deadline) => {
+    const startDates = new Date(startDate);
+    const deadlines = new Date(deadline);
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    // today.setHours(0, 0, 0, 0);
 
-    const deadlineDate = new Date(deadline);
-    deadlineDate.setHours(0, 0, 0, 0);
-
-    const yearEndDateOnly = new Date(yearEndDate);
-    yearEndDateOnly.setHours(0, 0, 0, 0);
-
-    if (deadlineDate < today || yearEndDateOnly < today) {
-      return "Overdue";
-    } else if (
-      deadlineDate.getTime() === today.getTime() ||
-      yearEndDateOnly.getTime() === today.getTime()
-    ) {
+    if (startDates <= today) {
       return "Due";
+    } else if (deadlines >= today) {
+      return "Overdue";
+    } else {
+      return "";
     }
-    return "";
   };
 
   // -----------Copy Task------->
@@ -459,8 +515,6 @@ const AllTasks = () => {
       }
     );
     if (data) {
-      console.log("Copied Task:", data.task);
-
       setTasksData((prevData) => [...prevData, data.task]);
     }
   };
@@ -634,6 +688,14 @@ const AllTasks = () => {
       {
         accessorKey: "hours",
         header: "Hrs",
+        Cell: ({ cell, row }) => {
+          const hours = cell.getValue();
+          return (
+            <div className="w-full flex items-center justify-center">
+              <span className="text-[15px] font-medium">{hours}</span>
+            </div>
+          );
+        },
         filterFn: "equals",
         size: 80,
       },
@@ -642,24 +704,34 @@ const AllTasks = () => {
         accessorKey: "startDate",
         header: "Start Date",
         Cell: ({ cell, row }) => {
-          const [date, setDate] = useState(
-            format(new Date(cell.getValue()), "dd-MMM-yyyy")
-          );
+          const [date, setDate] = useState(() => {
+            const cellDate = new Date(cell.getValue());
+            return cellDate.toISOString().split("T")[0];
+          });
+
+          const [showStartDate, setShowStartDate] = useState(false);
 
           const handleDateChange = (newDate) => {
             setDate(newDate);
             updateAlocateTask(row.original._id, "", date, "");
+            setShowStartDate(false);
           };
 
           return (
             <div className="w-full flex items-center justify-center">
-              <input
-                type="text"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                onBlur={(e) => handleDateChange(e.target.value)}
-                className={`h-[2rem] w-[6rem] cursor-pointer text-center rounded-md border border-gray-200 outline-none `}
-              />
+              {!showStartDate ? (
+                <p onDoubleClick={() => setShowStartDate(true)}>
+                  {format(new Date(date), "dd-MMM-yyyy")}
+                </p>
+              ) : (
+                <input
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  onBlur={(e) => handleDateChange(e.target.value)}
+                  className={`h-[2rem] w-[6rem] cursor-pointer text-center rounded-md border border-gray-200 outline-none `}
+                />
+              )}
             </div>
           );
         },
@@ -778,13 +850,17 @@ const AllTasks = () => {
         accessorKey: "deadline",
         header: "Deadline",
         Cell: ({ cell, row }) => {
-          const [date, setDate] = useState(
-            format(new Date(cell.getValue()), "dd-MMM-yyyy")
-          );
+          const [date, setDate] = useState(() => {
+            const cellDate = new Date(cell.getValue());
+            return cellDate.toISOString().split("T")[0];
+          });
+
+          const [showDeadline, setShowDeadline] = useState(false);
 
           const handleDateChange = (newDate) => {
             setDate(newDate);
             updateAlocateTask(row.original._id, "", "", date);
+            setShowDeadline(false);
           };
 
           const cellDate = new Date(date);
@@ -793,15 +869,21 @@ const AllTasks = () => {
 
           return (
             <div className="w-full flex items-center justify-center">
-              <input
-                type="text"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                onBlur={(e) => handleDateChange(e.target.value)}
-                className={`h-[2rem] w-[6rem] cursor-pointer text-center rounded-md border border-gray-200 outline-none ${
-                  isExpired ? "text-red-500" : ""
-                }`}
-              />
+              {!showDeadline ? (
+                <p onDoubleClick={() => setShowDeadline(true)}>
+                  {format(new Date(date), "dd-MMM-yyyy")}
+                </p>
+              ) : (
+                <input
+                  type="text"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  onBlur={(e) => handleDateChange(e.target.value)}
+                  className={`h-[2rem] w-[6rem] cursor-pointer text-center rounded-md border border-gray-200 outline-none ${
+                    isExpired ? "text-red-500" : ""
+                  }`}
+                />
+              )}
             </div>
           );
         },
@@ -1506,13 +1588,13 @@ const AllTasks = () => {
                 <Loader />
               </div>
             ) : (
-              <div className="w-full min-h-[70vh] relative">
+              <div className="w-full min-h-[10vh] relative -mt-[10px] ">
                 <div className="h-full hidden1 overflow-y-scroll relative">
                   <MaterialReactTable table={table} />
                 </div>
-                {/* <span className="absolute bottom-4 left-[32%] z-10 font-semibold text-[15px] text-gray-900">
-                  Total Hrs: {0}
-                </span> */}
+                <span className="absolute bottom-4 left-[38%] z-10 font-semibold text-[15px] text-gray-900">
+                  Total Hrs: {totalHours}
+                </span>
               </div>
             )}
           </div>

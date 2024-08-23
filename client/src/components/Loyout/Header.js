@@ -89,9 +89,6 @@ export default function Header() {
   const userInitials = auth?.user?.name
     ? auth?.user?.name?.slice(0, 1).toUpperCase()
     : "";
-  const backgroundColor = userInitials
-    ? stringToColor(userInitials)
-    : "orangered";
 
   const handleLogout = () => {
     setAuth({ ...auth, user: null, token: "" });
@@ -377,15 +374,17 @@ export default function Header() {
           {/* ----------Profile Image-------- */}
           <div className="relative">
             <div
-              className="w-[2.6rem] h-[2.6rem] cursor-pointer relative rounded-full overflow-hidden flex items-center justify-center text-white border-2 border-orange-600"
-              style={{ backgroundColor }}
+              className="w-[2.6rem] h-[2.6rem] cursor-pointer relative rounded-full bg-sky-600 overflow-hidden flex items-center justify-center text-white border-2 border-orange-600"
               onClick={() => setShow(!show)}
             >
-              {userInfo ? (
-                <img src={userInfo?.avatar} alt={userInfo?.name?.slice(0, 1)} />
+              {userInfo?.avatar ? (
+                <img
+                  src={userInfo?.avatar ? userInfo?.avatar : "/profile1.jpeg"}
+                  alt={userInfo?.name?.slice(0, 1)}
+                />
               ) : (
                 <h3 className="text-[20px] font-medium uppercase">
-                  {userInitials}
+                  {userInfo?.name?.slice(0, 1)}
                 </h3>
               )}
             </div>

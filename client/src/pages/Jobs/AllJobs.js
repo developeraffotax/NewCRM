@@ -107,6 +107,27 @@ export default function AllJobs() {
     "Feedback",
   ];
 
+  // -----------Date-------->
+  useEffect(() => {
+    if (active === "All") {
+      if (filterData) {
+        const totalHours = tableData.reduce(
+          (sum, client) => sum + Number(client.totalHours),
+          0
+        );
+        setTotalHours(totalHours.toFixed(0));
+      }
+    } else {
+      if (filterData) {
+        const totalHours = filterData.reduce(
+          (sum, client) => sum + Number(client.totalHours),
+          0
+        );
+        setTotalHours(totalHours.toFixed(0));
+      }
+    }
+  }, [filterData, tableData, active]);
+
   // ---------------All Client_Job Data----------->
   const allClientJobData = async () => {
     setLoading(true);
@@ -116,11 +137,11 @@ export default function AllJobs() {
       );
       if (data) {
         setTableData(data?.clients);
-        const totalHours = data.clients.reduce(
-          (sum, client) => sum + Number(client.totalHours),
-          0
-        );
-        setTotalHours(totalHours.toFixed(0));
+        // const totalHours = data.clients.reduce(
+        //   (sum, client) => sum + Number(client.totalHours),
+        //   0
+        // );
+        // setTotalHours(totalHours.toFixed(0));
         setLoading(false);
       }
     } catch (error) {
@@ -203,7 +224,7 @@ export default function AllJobs() {
         item._id === value
     );
 
-    console.log("FilterData", filteredData);
+    // console.log("FilterData", filteredData);
 
     setFilterData([...filteredData]);
   };
@@ -385,27 +406,41 @@ export default function AllJobs() {
   };
 
   // <-----------Job Status------------->
+  // const getStatus = (jobDeadline, yearEnd) => {
+  //   const deadline = new Date(jobDeadline);
+  //   const yearEndDate = new Date(yearEnd);
+  //   const today = new Date();
+  //   today.setHours(0, 0, 0, 0);
+
+  //   const deadlineDate = new Date(deadline);
+  //   deadlineDate.setHours(0, 0, 0, 0);
+
+  //   const yearEndDateOnly = new Date(yearEndDate);
+  //   yearEndDateOnly.setHours(0, 0, 0, 0);
+
+  //   if (deadlineDate < today || yearEndDateOnly < today) {
+  //     return "Overdue";
+  //   } else if (
+  //     deadlineDate.getTime() === today.getTime() ||
+  //     yearEndDateOnly.getTime() === today.getTime()
+  //   ) {
+  //     return "Due";
+  //   }
+  //   return "";
+  // };
   const getStatus = (jobDeadline, yearEnd) => {
     const deadline = new Date(jobDeadline);
     const yearEndDate = new Date(yearEnd);
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    // today.setHours(0, 0, 0, 0);
 
-    const deadlineDate = new Date(deadline);
-    deadlineDate.setHours(0, 0, 0, 0);
-
-    const yearEndDateOnly = new Date(yearEndDate);
-    yearEndDateOnly.setHours(0, 0, 0, 0);
-
-    if (deadlineDate < today || yearEndDateOnly < today) {
-      return "Overdue";
-    } else if (
-      deadlineDate.getTime() === today.getTime() ||
-      yearEndDateOnly.getTime() === today.getTime()
-    ) {
+    if (yearEndDate <= today) {
       return "Due";
+    } else if (deadline >= today) {
+      return "Overdue";
+    } else {
+      return "";
     }
-    return "";
   };
 
   // -------------------Open Detail Modal------->
@@ -444,7 +479,13 @@ export default function AllJobs() {
           : { currentDate: date }
       );
       if (data) {
-        // toast.success("Date updated successfully!");
+        const clientJob = data.clientJob;
+        toast.success("Date updated successfully!");
+        setTableData((prevData) =>
+          prevData.map((item) =>
+            item._id === clientJob._id ? clientJob : item
+          )
+        );
       }
     } catch (error) {
       console.log(error);
@@ -599,6 +640,14 @@ export default function AllJobs() {
       {
         accessorKey: "totalHours",
         header: "Hrs",
+        Cell: ({ cell, row }) => {
+          const hours = cell.getValue();
+          return (
+            <div className="w-full flex items-center justify-center">
+              <span className="text-[15px] font-medium">{hours}</span>
+            </div>
+          );
+        },
         filterFn: "equals",
         size: 90,
       },
@@ -607,28 +656,34 @@ export default function AllJobs() {
         accessorKey: "job.yearEnd",
         header: "Year End",
         Cell: ({ cell, row }) => {
-          const [date, setDate] = useState(
-            format(new Date(cell.getValue()), "dd-MMM-yyyy")
-          );
+          const [date, setDate] = useState(() => {
+            const cellDate = new Date(cell.getValue());
+            return cellDate.toISOString().split("T")[0];
+          });
+
+          const [showYearend, setShowYearend] = useState(false);
 
           const handleDateChange = (newDate) => {
             setDate(newDate);
-            handleUpdateDates(row.original._id, newDate, "yearEnd");
+            handleUpdateDates(row?.original?._id, newDate, "yearEnd");
+            setShowYearend(false);
           };
-
-          // const cellDate = new Date(date);
-          // const today = new Date();
-          // const isExpired = cellDate < today;
 
           return (
             <div className="w-full flex items-center justify-center">
-              <input
-                type="text"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                onBlur={(e) => handleDateChange(e.target.value)}
-                className={`h-[2rem] w-[6rem] cursor-pointer text-center rounded-md border border-gray-200 outline-none `}
-              />
+              {!showYearend ? (
+                <p onDoubleClick={() => setShowYearend(true)}>
+                  {format(new Date(date), "dd-MMM-yyyy")}
+                </p>
+              ) : (
+                <input
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  onBlur={(e) => handleDateChange(e.target.value)}
+                  className={`h-[2rem] w-[6rem] cursor-pointer text-center rounded-md border border-gray-200 outline-none `}
+                />
+              )}
             </div>
           );
         },
@@ -759,13 +814,17 @@ export default function AllJobs() {
         accessorKey: "job.jobDeadline",
         header: "Deadline",
         Cell: ({ cell, row }) => {
-          const [date, setDate] = useState(
-            format(new Date(cell.getValue()), "dd-MMM-yyyy")
-          );
+          const [date, setDate] = useState(() => {
+            const cellDate = new Date(cell.getValue());
+            return cellDate.toISOString().split("T")[0];
+          });
+
+          const [showDeadline, setShowDeadline] = useState(false);
 
           const handleDateChange = (newDate) => {
             setDate(newDate);
-            handleUpdateDates(row.original._id, newDate, "yearEnd");
+            handleUpdateDates(row.original._id, newDate, "jobDeadline");
+            setShowDeadline(false);
           };
 
           const cellDate = new Date(date);
@@ -774,15 +833,21 @@ export default function AllJobs() {
 
           return (
             <div className="w-full flex items-center justify-center">
-              <input
-                type="text"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                onBlur={(e) => handleDateChange(e.target.value)}
-                className={`h-[2rem] w-[6rem] cursor-pointer text-center rounded-md border border-gray-200 outline-none ${
-                  isExpired ? "text-red-500" : ""
-                }`}
-              />
+              {!showDeadline ? (
+                <p onDoubleClick={() => setShowDeadline(true)}>
+                  {format(new Date(date), "dd-MMM-yyyy")}
+                </p>
+              ) : (
+                <input
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  onBlur={(e) => handleDateChange(e.target.value)}
+                  className={`h-[2rem] w-[6rem] cursor-pointer text-center rounded-md border border-gray-200 outline-none ${
+                    isExpired ? "text-red-500" : ""
+                  }`}
+                />
+              )}
             </div>
           );
         },
@@ -903,24 +968,34 @@ export default function AllJobs() {
         accessorKey: "currentDate",
         header: "Job Date",
         Cell: ({ cell, row }) => {
-          const [date, setDate] = useState(
-            format(new Date(cell.getValue()), "dd-MMM-yyyy")
-          );
+          const [date, setDate] = useState(() => {
+            const cellDate = new Date(cell.getValue());
+            return cellDate.toISOString().split("T")[0];
+          });
+
+          const [showCurrentDate, setShowCurrentDate] = useState(false);
 
           const handleDateChange = (newDate) => {
             setDate(newDate);
             handleUpdateDates(row.original._id, newDate, "currentDate");
+            setShowCurrentDate(false);
           };
 
           return (
             <div className="w-full flex items-center justify-center">
-              <input
-                type="text"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                onBlur={(e) => handleDateChange(e.target.value)}
-                className={`h-[2rem] w-[6rem] cursor-pointer text-center rounded-md border border-gray-200 outline-none `}
-              />
+              {!showCurrentDate ? (
+                <p onDoubleClick={() => setShowCurrentDate(true)}>
+                  {format(new Date(date), "dd-MMM-yyyy")}
+                </p>
+              ) : (
+                <input
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  onBlur={(e) => handleDateChange(e.target.value)}
+                  className={`h-[2rem] w-[6rem] cursor-pointer text-center rounded-md border border-gray-200 outline-none `}
+                />
+              )}
             </div>
           );
         },
@@ -1112,7 +1187,7 @@ export default function AllJobs() {
       },
       {
         accessorKey: "timertracker",
-        header: "Time Tr.",
+        header: "Timer",
         Cell: ({ cell, row }) => {
           // const statusValue = cell.getValue();
           // console.log("row", row.original.job.jobName);
@@ -1508,11 +1583,11 @@ export default function AllJobs() {
                 <Loader />
               </div>
             ) : (
-              <div className="w-full min-h-[70vh] relative">
+              <div className="w-full min-h-[20vh] relative -mt-[6px] border-t border-gray-300">
                 <div className="h-full hidden1 overflow-y-scroll relative">
                   <MaterialReactTable table={table} />
                 </div>
-                <span className="absolute bottom-4 left-[32%] z-10 font-semibold text-[15px] text-gray-900">
+                <span className="absolute bottom-4 left-[34.5%] z-10 font-semibold text-[15px] text-gray-900">
                   Total Hrs: {totalHours}
                 </span>
               </div>
