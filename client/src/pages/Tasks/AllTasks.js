@@ -88,7 +88,7 @@ const AllTasks = () => {
 
   const dateStatus = ["Due", "Overdue"];
 
-  const status = ["Todo", "Progress", "Review", "Onhold"];
+  const status = ["To do", "Progress", "Review", "Onhold"];
 
   // -------Get All Tasks----->
   const getAllTasks = async () => {
@@ -123,7 +123,7 @@ const AllTasks = () => {
 
   // ---------Total Hours-------->
   useEffect(() => {
-    if (active === "All") {
+    if (active === "All" && !active1) {
       if (filterData) {
         const totalHours = tasksData.reduce(
           (sum, client) => sum + Number(client.hours),
@@ -140,7 +140,7 @@ const AllTasks = () => {
         setTotalHours(totalHours.toFixed(0));
       }
     }
-  }, [filterData, tasksData, active]);
+  }, [filterData, tasksData, active, active1]);
 
   //---------- Get All Users-----------
   const getAllUsers = async () => {
@@ -481,12 +481,17 @@ const AllTasks = () => {
     const startDates = new Date(startDate);
     const deadlines = new Date(deadline);
     const today = new Date();
-    // today.setHours(0, 0, 0, 0);
+    today.setHours(0, 0, 0, 0);
 
-    if (startDates <= today) {
-      return "Due";
-    } else if (deadlines >= today) {
+    if (deadlines.setHours(0, 0, 0, 0) < today.setHours(0, 0, 0, 0)) {
       return "Overdue";
+    } else if (
+      startDates.setHours(0, 0, 0, 0) <= today.setHours(0, 0, 0, 0) &&
+      !(deadlines.setHours(0, 0, 0, 0) <= today.setHours(0, 0, 0, 0))
+    ) {
+      return "Due";
+    } else if (deadlines.setHours(0, 0, 0, 0) === today.setHours(0, 0, 0, 0)) {
+      return "Due";
     } else {
       return "";
     }
@@ -647,7 +652,7 @@ const AllTasks = () => {
             setShowEdit(false);
           };
           return (
-            <div className="w-full h-full">
+            <div className="w-full h-full ">
               {showEdit ? (
                 <input
                   type="text"
@@ -659,7 +664,7 @@ const AllTasks = () => {
                 />
               ) : (
                 <div
-                  className="w-full h-full cursor-pointer "
+                  className="w-full h-full cursor-pointer flex items-center justify-start "
                   onDoubleClick={() => setShowEdit(true)}
                   onClick={() => {
                     setTaskID(row.original._id);
@@ -668,7 +673,7 @@ const AllTasks = () => {
                   }}
                 >
                   <p
-                    className="text-sky-500 cursor-pointer hover:text-sky-600 "
+                    className="text-sky-500 cursor-pointer text-start hover:text-sky-600 "
                     onDoubleClick={() => setShowEdit(true)}
                   >
                     {allocateTask}
@@ -875,7 +880,7 @@ const AllTasks = () => {
                 </p>
               ) : (
                 <input
-                  type="text"
+                  type="date"
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
                   onBlur={(e) => handleDateChange(e.target.value)}
@@ -1053,7 +1058,7 @@ const AllTasks = () => {
               className="w-[6rem] h-[2rem] rounded-md border border-sky-300 outline-none"
             >
               {/* <option value="">Select Status</option> */}
-              <option value="Todo">Todo</option>
+              <option value="To do">To do</option>
               <option value="Progress">Progress</option>
               <option value="Review">Review</option>
               <option value="On hold">On hold</option>
@@ -1063,7 +1068,7 @@ const AllTasks = () => {
         filterFn: "equals",
         filterSelectOptions: [
           "Select",
-          "Todo",
+          "To do",
           "Progress",
           "Review",
           "On hold",

@@ -109,7 +109,7 @@ export default function AllJobs() {
 
   // -----------Date-------->
   useEffect(() => {
-    if (active === "All") {
+    if (active === "All" && !active1) {
       if (filterData) {
         const totalHours = tableData.reduce(
           (sum, client) => sum + Number(client.totalHours),
@@ -126,7 +126,7 @@ export default function AllJobs() {
         setTotalHours(totalHours.toFixed(0));
       }
     }
-  }, [filterData, tableData, active]);
+  }, [filterData, tableData, active, active1]);
 
   // ---------------All Client_Job Data----------->
   const allClientJobData = async () => {
@@ -432,12 +432,17 @@ export default function AllJobs() {
     const deadline = new Date(jobDeadline);
     const yearEndDate = new Date(yearEnd);
     const today = new Date();
-    // today.setHours(0, 0, 0, 0);
+    today.setHours(0, 0, 0, 0);
 
-    if (yearEndDate <= today) {
-      return "Due";
-    } else if (deadline >= today) {
+    if (deadline.setHours(0, 0, 0, 0) < today.setHours(0, 0, 0, 0)) {
       return "Overdue";
+    } else if (
+      yearEndDate.setHours(0, 0, 0, 0) <= today.setHours(0, 0, 0, 0) &&
+      !(deadline.setHours(0, 0, 0, 0) <= today.setHours(0, 0, 0, 0))
+    ) {
+      return "Due";
+    } else if (deadline.setHours(0, 0, 0, 0) === today.setHours(0, 0, 0, 0)) {
+      return "Due";
     } else {
       return "";
     }
