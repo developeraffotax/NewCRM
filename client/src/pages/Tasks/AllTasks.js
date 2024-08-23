@@ -90,6 +90,27 @@ const AllTasks = () => {
 
   const status = ["To do", "Progress", "Review", "Onhold"];
 
+  // ---------Total Hours-------->
+  useEffect(() => {
+    if (active === "All" && !active1) {
+      if (filterData) {
+        const totalHours = tasksData.reduce(
+          (sum, client) => sum + Number(client.hours),
+          0
+        );
+        setTotalHours(totalHours.toFixed(0));
+      }
+    } else {
+      if (filterData) {
+        const totalHours = filterData.reduce(
+          (sum, client) => sum + Number(client.hours),
+          0
+        );
+        setTotalHours(totalHours.toFixed(0));
+      }
+    }
+  }, [filterData, tasksData, active, active1]);
+
   // -------Get All Tasks----->
   const getAllTasks = async () => {
     setLoading(true);
@@ -119,28 +140,7 @@ const AllTasks = () => {
   useEffect(() => {
     getAllTasks();
     // eslint-disable-next-line
-  }, []);
-
-  // ---------Total Hours-------->
-  useEffect(() => {
-    if (active === "All" && !active1) {
-      if (filterData) {
-        const totalHours = tasksData.reduce(
-          (sum, client) => sum + Number(client.hours),
-          0
-        );
-        setTotalHours(totalHours.toFixed(0));
-      }
-    } else {
-      if (filterData) {
-        const totalHours = filterData.reduce(
-          (sum, client) => sum + Number(client.hours),
-          0
-        );
-        setTotalHours(totalHours.toFixed(0));
-      }
-    }
-  }, [filterData, tasksData, active, active1]);
+  }, [auth]);
 
   //---------- Get All Users-----------
   const getAllUsers = async () => {
@@ -183,7 +183,7 @@ const AllTasks = () => {
   useEffect(() => {
     getAllProjects();
     // eslint-disable-next-line
-  }, []);
+  }, [auth]);
 
   // ---------Delete Project-------->
   const handleDeleteConfirmation = (projectId) => {
